@@ -17,6 +17,7 @@ import {
   Users,
   ShoppingBag,
   ShoppingCart,
+  MessageSquare,
   Settings,
   LogOut,
 } from "lucide-react";
@@ -29,6 +30,7 @@ const adminMenuItems = [
   { title: "Users", url: "/admin/users", icon: Users },
   { title: "Products", url: "/admin/products", icon: ShoppingBag },
   { title: "Orders", url: "/admin/orders", icon: ShoppingCart },
+  { title: "Support", url: "/admin/support", icon: MessageSquare },
   { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
 

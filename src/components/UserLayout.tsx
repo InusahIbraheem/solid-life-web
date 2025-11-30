@@ -20,6 +20,9 @@ import {
   Wallet,
   ShoppingCart,
   TrendingUp,
+  MessageSquare,
+  Bell,
+  Award,
   LogOut,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
@@ -34,6 +37,9 @@ const userMenuItems = [
   { title: "Wallet", url: "/wallet", icon: Wallet },
   { title: "My Orders", url: "/orders", icon: ShoppingCart },
   { title: "Earnings", url: "/earnings", icon: TrendingUp },
+  { title: "Level Progress", url: "/level-progress", icon: Award },
+  { title: "Notifications", url: "/notifications", icon: Bell },
+  { title: "Support", url: "/support", icon: MessageSquare },
 ];
 
 interface UserLayoutProps {
