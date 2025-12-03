@@ -5,6 +5,7 @@ import { ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import productCocoa from "@/assets/product-cocoa-1.jpg";
 import productPhyto from "@/assets/product-phyto.jpg";
+import productGreenTea from "@/assets/product-green-tea.jpg";
 
 const Products = () => {
   const products = [
@@ -26,6 +27,15 @@ const Products = () => {
       image: productPhyto,
       benefits: ["Fight infections", "Antioxidant effect", "Boost immunity", "Promote healthy aging"]
     },
+    {
+      id: 3,
+      name: "Pure Organic Green Tea Extra",
+      description: "100% natural organic green tea for detoxification, weight management and overall wellness. High in antioxidants.",
+      price: 12000,
+      points: 120,
+      image: productGreenTea,
+      benefits: ["Detoxification", "Weight management", "High antioxidants", "Boost metabolism", "Improve brain function"]
+    },
   ];
 
   const addToCart = (productName: string) => {
@@ -40,7 +50,7 @@ const Products = () => {
           <p className="text-muted-foreground">Browse and purchase our wellness products</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-3 gap-6">
           {products.map((product) => (
             <Card key={product.id} className="shadow-soft hover:shadow-elevated transition-all overflow-hidden">
               <div className="aspect-square overflow-hidden">
