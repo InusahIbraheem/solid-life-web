@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Users, TrendingUp, Award, Shield, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Users, TrendingUp, Award, Shield, CheckCircle2, MapPin, Phone, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import heroImage from "@/assets/hero-image.jpg";
 import productCocoa from "@/assets/product-cocoa-1.jpg";
 import productPhyto from "@/assets/product-phyto.jpg";
+import productGreenTea from "@/assets/product-green-tea.jpg";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
 
@@ -171,17 +172,17 @@ const Index = () => {
               100% natural wellness products that deliver real results
             </p>
           </div>
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             <Card className="overflow-hidden hover:shadow-elevated transition-all">
               <div className="aspect-square overflow-hidden">
                 <img src={productCocoa} alt="Cocoa Power Juggernaut" className="w-full h-full object-cover hover:scale-105 transition-transform" />
               </div>
               <CardContent className="p-6">
-                <h3 className="text-2xl font-bold mb-2">Cocoa Power Juggernaut</h3>
-                <p className="text-muted-foreground mb-4">Premium cocoa blend with phytoestrogens for enhanced vitality and wellness</p>
+                <h3 className="text-xl font-bold mb-2">Cocoa Power Juggernaut</h3>
+                <p className="text-muted-foreground mb-4 text-sm">Premium cocoa blend with phytoestrogens for enhanced vitality</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-primary">₦15,000</span>
-                  <Button>Learn More</Button>
+                  <span className="text-xl font-bold text-primary">₦15,000</span>
+                  <Button size="sm">Learn More</Button>
                 </div>
               </CardContent>
             </Card>
@@ -190,11 +191,24 @@ const Index = () => {
                 <img src={productPhyto} alt="Phytochemicals & Anti-Ageing" className="w-full h-full object-cover hover:scale-105 transition-transform" />
               </div>
               <CardContent className="p-6">
-                <h3 className="text-2xl font-bold mb-2">Organic Anti-Ageing Product</h3>
-                <p className="text-muted-foreground mb-4">Natural phytochemicals for healthy immune system and cellular rejuvenation</p>
+                <h3 className="text-xl font-bold mb-2">Organic Anti-Ageing Product</h3>
+                <p className="text-muted-foreground mb-4 text-sm">Natural phytochemicals for healthy immune system</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-primary">₦18,000</span>
-                  <Button>Learn More</Button>
+                  <span className="text-xl font-bold text-primary">₦18,000</span>
+                  <Button size="sm">Learn More</Button>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="overflow-hidden hover:shadow-elevated transition-all">
+              <div className="aspect-square overflow-hidden">
+                <img src={productGreenTea} alt="Pure Organic Green Tea" className="w-full h-full object-cover hover:scale-105 transition-transform" />
+              </div>
+              <CardContent className="p-6">
+                <h3 className="text-xl font-bold mb-2">Pure Organic Green Tea</h3>
+                <p className="text-muted-foreground mb-4 text-sm">100% natural green tea for detox and weight management</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xl font-bold text-primary">₦12,000</span>
+                  <Button size="sm">Learn More</Button>
                 </div>
               </CardContent>
             </Card>
@@ -357,15 +371,24 @@ const Index = () => {
             </div>
             <div>
               <h4 className="font-bold mb-4">Contact</h4>
-              <ul className="space-y-2 text-muted-foreground">
-                <li>Email: info@solidlife.com</li>
-                <li>Phone: +234 800 000 0000</li>
-                <li>Address: Lagos, Nigeria</li>
+              <ul className="space-y-3 text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <Mail className="w-4 h-4 mt-1 flex-shrink-0" />
+                  <span>info@solidlife.com</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Phone className="w-4 h-4 mt-1 flex-shrink-0" />
+                  <span>+234 816 608 4650</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <MapPin className="w-4 h-4 mt-1 flex-shrink-0" />
+                  <span>Umuozu Ezumoha Autonomous Community, Isiala Mbano LGA, Imo State, Nigeria</span>
+                </li>
               </ul>
             </div>
           </div>
           <div className="border-t pt-8 text-center text-muted-foreground">
-            <p>&copy; 2024 Solid Life MLM Nigeria Ltd. All rights reserved.</p>
+            <p>&copy; 2024 Solid Life MLM Nigeria Ltd. RC: 7329402. All rights reserved.</p>
           </div>
         </div>
       </footer>
