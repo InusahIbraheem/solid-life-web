@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import productCocoa from "@/assets/product-cocoa-1.jpg";
 import productPhyto from "@/assets/product-phyto.jpg";
 import productGreenTea from "@/assets/product-green-tea.jpg";
+import productImmuneBooster from "@/assets/product-immune-booster.jpg";
 
 const Products = () => {
   const products = [
@@ -35,6 +36,15 @@ const Products = () => {
       points: 120,
       image: productGreenTea,
       benefits: ["Detoxification", "Weight management", "High antioxidants", "Boost metabolism", "Improve brain function"]
+    },
+    {
+      id: 4,
+      name: "Immune Booster",
+      description: "Natural immune system support formula to strengthen your body's defenses and promote overall wellness.",
+      price: 14000,
+      points: 140,
+      image: productImmuneBooster,
+      benefits: ["Strengthen immunity", "Fight infections", "Boost energy", "Support overall health"]
     },
   ];
 

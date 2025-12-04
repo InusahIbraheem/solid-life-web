@@ -7,6 +7,7 @@ import heroImage from "@/assets/hero-image.jpg";
 import productCocoa from "@/assets/product-cocoa-1.jpg";
 import productPhyto from "@/assets/product-phyto.jpg";
 import productGreenTea from "@/assets/product-green-tea.jpg";
+import productImmuneBooster from "@/assets/product-immune-booster.jpg";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
 
@@ -172,13 +173,13 @@ const Index = () => {
               100% natural wellness products that deliver real results
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-6 max-w-7xl mx-auto">
             <Card className="overflow-hidden hover:shadow-elevated transition-all">
               <div className="aspect-square overflow-hidden">
                 <img src={productCocoa} alt="Cocoa Power Juggernaut" className="w-full h-full object-cover hover:scale-105 transition-transform" />
               </div>
               <CardContent className="p-6">
-                <h3 className="text-xl font-bold mb-2">Cocoa Power Juggernaut</h3>
+                <h3 className="text-lg font-bold mb-2">Cocoa Power Juggernaut</h3>
                 <p className="text-muted-foreground mb-4 text-sm">Premium cocoa blend with phytoestrogens for enhanced vitality</p>
                 <div className="flex items-center justify-between">
                   <span className="text-xl font-bold text-primary">₦15,000</span>
@@ -191,7 +192,7 @@ const Index = () => {
                 <img src={productPhyto} alt="Phytochemicals & Anti-Ageing" className="w-full h-full object-cover hover:scale-105 transition-transform" />
               </div>
               <CardContent className="p-6">
-                <h3 className="text-xl font-bold mb-2">Organic Anti-Ageing Product</h3>
+                <h3 className="text-lg font-bold mb-2">Organic Anti-Ageing Product</h3>
                 <p className="text-muted-foreground mb-4 text-sm">Natural phytochemicals for healthy immune system</p>
                 <div className="flex items-center justify-between">
                   <span className="text-xl font-bold text-primary">₦18,000</span>
@@ -204,10 +205,23 @@ const Index = () => {
                 <img src={productGreenTea} alt="Pure Organic Green Tea" className="w-full h-full object-cover hover:scale-105 transition-transform" />
               </div>
               <CardContent className="p-6">
-                <h3 className="text-xl font-bold mb-2">Pure Organic Green Tea</h3>
+                <h3 className="text-lg font-bold mb-2">Pure Organic Green Tea</h3>
                 <p className="text-muted-foreground mb-4 text-sm">100% natural green tea for detox and weight management</p>
                 <div className="flex items-center justify-between">
                   <span className="text-xl font-bold text-primary">₦12,000</span>
+                  <Button size="sm">Learn More</Button>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="overflow-hidden hover:shadow-elevated transition-all">
+              <div className="aspect-square overflow-hidden">
+                <img src={productImmuneBooster} alt="Immune Booster" className="w-full h-full object-cover hover:scale-105 transition-transform" />
+              </div>
+              <CardContent className="p-6">
+                <h3 className="text-lg font-bold mb-2">Immune Booster</h3>
+                <p className="text-muted-foreground mb-4 text-sm">Natural immune system support for overall wellness</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xl font-bold text-primary">₦14,000</span>
                   <Button size="sm">Learn More</Button>
                 </div>
               </CardContent>
