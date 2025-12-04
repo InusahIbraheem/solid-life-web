@@ -5,12 +5,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit, Trash } from "lucide-react";
+import { Plus, Edit, Trash, Upload, Image } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import productCocoa from "@/assets/product-cocoa-1.jpg";
+import productPhyto from "@/assets/product-phyto.jpg";
+import productGreenTea from "@/assets/product-green-tea.jpg";
+import productImmuneBooster from "@/assets/product-immune-booster.jpg";
 
 const Products = () => {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const products = [
     { 
@@ -20,7 +25,8 @@ const Products = () => {
       points: 150, 
       stock: 450,
       sold: 2345,
-      status: "Active"
+      status: "Active",
+      image: productCocoa
     },
     { 
       id: 2, 
@@ -29,9 +35,42 @@ const Products = () => {
       points: 180, 
       stock: 320,
       sold: 1876,
-      status: "Active"
+      status: "Active",
+      image: productPhyto
+    },
+    { 
+      id: 3, 
+      name: "Pure Organic Green Tea", 
+      price: 12000, 
+      points: 120, 
+      stock: 280,
+      sold: 1543,
+      status: "Active",
+      image: productGreenTea
+    },
+    { 
+      id: 4, 
+      name: "Immune Booster", 
+      price: 14000, 
+      points: 140, 
+      stock: 200,
+      sold: 890,
+      status: "Active",
+      image: productImmuneBooster
     },
   ];
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      toast.success("Image uploaded successfully!");
+    }
+  };
 
   const handleSave = () => {
     toast.success("Product saved successfully!");
@@ -59,6 +98,34 @@ const Products = () => {
             </CardHeader>
             <CardContent>
               <form className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Product Image</Label>
+                  <div className="flex items-start gap-4">
+                    <div className="w-32 h-32 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-muted/50 overflow-hidden">
+                      {selectedImage ? (
+                        <img src={selectedImage} alt="Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <Image className="w-8 h-8 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <Input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        id="product-image"
+                      />
+                      <Label htmlFor="product-image" className="cursor-pointer">
+                        <div className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-muted transition-colors w-fit">
+                          <Upload className="w-4 h-4" />
+                          Upload Image
+                        </div>
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-2">PNG, JPG up to 5MB</p>
+                    </div>
+                  </div>
+                </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="productName">Product Name</Label>
@@ -84,10 +151,10 @@ const Products = () => {
                   <Textarea id="description" placeholder="Product description..." rows={4} />
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={handleSave} className="gradient-primary text-white">
+                  <Button type="button" onClick={handleSave} className="gradient-primary text-white">
                     Save Product
                   </Button>
-                  <Button variant="outline" onClick={() => setShowAddForm(false)}>
+                  <Button type="button" variant="outline" onClick={() => { setShowAddForm(false); setSelectedImage(null); }}>
                     Cancel
                   </Button>
                 </div>
@@ -131,6 +198,7 @@ const Products = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Image</TableHead>
                   <TableHead>Product Name</TableHead>
                   <TableHead>Price</TableHead>
                   <TableHead>Points</TableHead>
@@ -143,6 +211,9 @@ const Products = () => {
               <TableBody>
                 {products.map((product) => (
                   <TableRow key={product.id}>
+                    <TableCell>
+                      <img src={product.image} alt={product.name} className="w-12 h-12 rounded-lg object-cover" />
+                    </TableCell>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell className="font-bold text-primary">₦{product.price.toLocaleString()}</TableCell>
                     <TableCell>{product.points} pts</TableCell>

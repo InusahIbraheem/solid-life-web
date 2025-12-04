@@ -19,6 +19,7 @@ import UserNotifications from "./pages/user/Notifications";
 import UserLevelProgress from "./pages/user/LevelProgress";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminUsers from "./pages/admin/Users";
+import AdminReferrals from "./pages/admin/Referrals";
 import AdminProducts from "./pages/admin/Products";
 import AdminOrders from "./pages/admin/Orders";
 import AdminSupport from "./pages/admin/Support";
@@ -52,6 +53,7 @@ const App = () => (
           
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/referrals" element={<AdminReferrals />} />
           <Route path="/admin/products" element={<AdminProducts />} />
           <Route path="/admin/orders" element={<AdminOrders />} />
           <Route path="/admin/support" element={<AdminSupport />} />
