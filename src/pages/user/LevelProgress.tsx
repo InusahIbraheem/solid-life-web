@@ -15,23 +15,21 @@ import {
 
 const LevelProgress = () => {
   const currentLevel = {
-    name: "Gold",
-    level: 5,
-    icon: Award,
-    color: "text-warning",
-    bgColor: "bg-warning/10",
-    progress: 65,
-    currentPoints: 6500,
-    requiredPoints: 10000,
+    name: "Emerald",
+    level: 2,
+    icon: Star,
+    color: "text-success",
+    bgColor: "bg-success/10",
+    progress: 45,
+    currentPoints: 6750,
+    requiredPoints: 15000,
   };
 
   const levels = [
-    { name: "Bronze", level: 1, points: 0, icon: Award, unlocked: true },
-    { name: "Silver", level: 2, points: 1000, icon: Star, unlocked: true },
-    { name: "Gold", level: 3, points: 2500, icon: Award, unlocked: true },
-    { name: "Platinum", level: 4, points: 5000, icon: Trophy, unlocked: true },
-    { name: "Diamond", level: 5, points: 10000, icon: Crown, unlocked: true },
-    { name: "Elite", level: 6, points: 20000, icon: Zap, unlocked: false },
+    { name: "Junior", level: 1, points: 0, icon: Award, unlocked: true, bonus: "Base bonuses" },
+    { name: "Emerald", level: 2, points: 5000, icon: Star, unlocked: true, bonus: "5% Achievement" },
+    { name: "Gold", level: 3, points: 15000, icon: Award, unlocked: false, bonus: "4% Achievement" },
+    { name: "Diamond 1", level: 4, points: 50000, icon: Crown, unlocked: false, bonus: "3% Achievement + Car Fund" },
   ];
 
   const achievements = [
@@ -67,19 +65,19 @@ const LevelProgress = () => {
     },
     {
       id: 4,
-      title: "Gold Level",
-      description: "Reached Gold level status",
-      icon: Award,
+      title: "Emerald Rank",
+      description: "Reached Emerald level status",
+      icon: Star,
       earned: true,
       date: "2024-02-15",
-      color: "text-warning",
-      bgColor: "bg-warning/10",
+      color: "text-success",
+      bgColor: "bg-success/10",
     },
     {
       id: 5,
-      title: "50 Referrals",
-      description: "Recruited 50 direct referrals",
-      icon: Users,
+      title: "Gold Rank",
+      description: "Reach Gold level status",
+      icon: Award,
       earned: false,
       date: null,
       color: "text-muted-foreground",
@@ -87,8 +85,8 @@ const LevelProgress = () => {
     },
     {
       id: 6,
-      title: "Diamond Level",
-      description: "Reach Diamond level status",
+      title: "Diamond 1",
+      description: "Reach Diamond 1 status + Car Fund",
       icon: Crown,
       earned: false,
       date: null,
@@ -97,13 +95,17 @@ const LevelProgress = () => {
     },
   ];
 
-  const benefits = [
-    { level: "Gold", benefit: "30% commission on Level 1", active: true },
-    { level: "Gold", benefit: "Priority customer support", active: true },
-    { level: "Gold", benefit: "Monthly bonus rewards", active: true },
-    { level: "Diamond", benefit: "40% commission on Level 1", active: false },
-    { level: "Diamond", benefit: "Exclusive training sessions", active: false },
-    { level: "Diamond", benefit: "International trips", active: false },
+  const bonuses = [
+    { label: "Retail Profit", value: "20%", active: true, description: "Profit on product sales" },
+    { label: "Sponsor Bonus", value: "33%", active: true, description: "Bonus for direct sponsorship" },
+    { label: "Personal Purchase Bonus", value: "10%", active: true, description: "On your own purchases" },
+    { label: "1st Level Bonus", value: "7%", active: true, description: "Commission from Level 1" },
+    { label: "2nd Level Bonus", value: "5%", active: true, description: "Commission from Level 2" },
+    { label: "3rd Level Bonus", value: "3%", active: true, description: "Commission from Level 3" },
+    { label: "Achievement Bonus", value: "5%", active: true, description: "Based on ₦420 per PV" },
+    { label: "Emerald Achievement", value: "5%", active: true, description: "Emerald rank bonus" },
+    { label: "Gold Achievement", value: "4%", active: false, description: "Requires Gold rank" },
+    { label: "Diamond 1 Achievement", value: "3%", active: false, description: "Requires Diamond 1 rank" },
   ];
 
   return (
@@ -117,22 +119,22 @@ const LevelProgress = () => {
         <Card className="shadow-elevated border-2 border-warning/30">
           <CardContent className="pt-6">
             <div className="flex items-center gap-6 mb-6">
-              <div className="w-20 h-20 bg-warning/20 rounded-full flex items-center justify-center">
-                <currentLevel.icon className="w-10 h-10 text-warning" />
+              <div className="w-20 h-20 bg-success/20 rounded-full flex items-center justify-center">
+                <currentLevel.icon className="w-10 h-10 text-success" />
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <h2 className="text-3xl font-bold">{currentLevel.name} Level</h2>
-                  <Badge className="bg-warning text-warning-foreground">
+                  <h2 className="text-3xl font-bold">{currentLevel.name} Rank</h2>
+                  <Badge className="bg-success text-success-foreground">
                     Level {currentLevel.level}
                   </Badge>
                 </div>
                 <p className="text-muted-foreground mb-4">
-                  {currentLevel.currentPoints.toLocaleString()} / {currentLevel.requiredPoints.toLocaleString()} points
+                  {currentLevel.currentPoints.toLocaleString()} / {currentLevel.requiredPoints.toLocaleString()} PV
                 </p>
                 <Progress value={currentLevel.progress} className="h-3" />
                 <p className="text-sm text-muted-foreground mt-2">
-                  {currentLevel.progress}% progress to Diamond level
+                  {currentLevel.progress}% progress to Gold rank
                 </p>
               </div>
             </div>
@@ -259,42 +261,45 @@ const LevelProgress = () => {
 
         <Card className="shadow-soft">
           <CardHeader>
-            <CardTitle>Level Benefits</CardTitle>
+            <CardTitle>Your Bonus Structure</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {benefits.map((benefit, index) => (
+            <div className="grid md:grid-cols-2 gap-3">
+              {bonuses.map((bonus, index) => (
                 <div
                   key={index}
                   className={`flex items-center gap-4 p-4 rounded-lg border ${
-                    benefit.active
+                    bonus.active
                       ? "border-primary/20 bg-primary/5"
                       : "border-border bg-muted/30"
                   }`}
                 >
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      benefit.active
+                      bonus.active
                         ? "bg-success/20 text-success"
                         : "bg-muted text-muted-foreground"
                     }`}
                   >
-                    {benefit.active ? "✓" : "🔒"}
+                    {bonus.active ? "✓" : "🔒"}
                   </div>
                   <div className="flex-1">
-                    <div className="font-medium">{benefit.benefit}</div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{bonus.label}</span>
+                      <span className={`text-lg font-bold ${bonus.active ? "text-secondary" : "text-muted-foreground"}`}>
+                        {bonus.value}
+                      </span>
+                    </div>
                     <div className="text-sm text-muted-foreground">
-                      {benefit.level} level benefit
+                      {bonus.description}
                     </div>
                   </div>
-                  {benefit.active ? (
-                    <Badge className="bg-success text-success-foreground">Active</Badge>
-                  ) : (
-                    <Badge variant="outline">Locked</Badge>
-                  )}
                 </div>
               ))}
             </div>
+            <p className="text-xs text-muted-foreground text-center mt-4">
+              Note: Rank Achievement Bonus is based on ₦420 per PV
+            </p>
           </CardContent>
         </Card>
       </div>
