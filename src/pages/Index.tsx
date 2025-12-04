@@ -234,50 +234,81 @@ const Index = () => {
       <section id="compensation" className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Compensation Plan</h2>
+            <h2 className="text-4xl font-bold mb-4">SolidLife Marketing Plan</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Earn from 10 levels deep with our generous commission structure
+              Business Reward Program for Builders - 8 Different Earnings in SolidLife
             </p>
           </div>
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             <Card className="p-8 shadow-elevated">
+              <div className="mb-6 p-4 bg-primary/10 rounded-lg text-center">
+                <div className="text-lg font-semibold text-primary">Registration Fee</div>
+                <div className="text-3xl font-bold text-secondary">₦15,000</div>
+                <div className="text-sm text-muted-foreground">Benefits: Sample Products for taste</div>
+              </div>
+              
               <div className="grid md:grid-cols-2 gap-6">
-                {[
-                  { level: "Level 1", commission: "30%", color: "bg-primary" },
-                  { level: "Level 2", commission: "20%", color: "bg-primary/90" },
-                  { level: "Level 3", commission: "15%", color: "bg-primary/80" },
-                  { level: "Level 4", commission: "10%", color: "bg-primary/70" },
-                  { level: "Level 5", commission: "8%", color: "bg-primary/60" },
-                  { level: "Level 6", commission: "6%", color: "bg-primary/50" },
-                  { level: "Level 7", commission: "5%", color: "bg-primary/40" },
-                  { level: "Level 8", commission: "4%", color: "bg-primary/30" },
-                  { level: "Level 9", commission: "3%", color: "bg-primary/20" },
-                  { level: "Level 10", commission: "2%", color: "bg-primary/10" },
-                ].map((item) => (
-                  <div key={item.level} className="flex items-center gap-4">
-                    <div className={`${item.color} text-white px-4 py-2 rounded-lg font-bold min-w-[100px] text-center`}>
-                      {item.level}
+                <div className="space-y-3">
+                  <h4 className="font-bold text-lg text-primary mb-4">Main Bonuses</h4>
+                  {[
+                    { label: "Retail Profit", value: "20%" },
+                    { label: "Sponsor Bonus", value: "33%" },
+                    { label: "Personal Purchase Bonus", value: "10%" },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <span className="font-medium">{item.label}</span>
+                      <span className="text-xl font-bold text-secondary">{item.value}</span>
                     </div>
-                    <div className="text-2xl font-bold text-secondary">{item.commission}</div>
+                  ))}
+                </div>
+                
+                <div className="space-y-3">
+                  <h4 className="font-bold text-lg text-primary mb-4">Level Bonuses</h4>
+                  {[
+                    { label: "1st Level Bonus", value: "7%" },
+                    { label: "2nd Level Bonus", value: "5%" },
+                    { label: "3rd Level Bonus", value: "3%" },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <span className="font-medium">{item.label}</span>
+                      <span className="text-xl font-bold text-secondary">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-8 p-6 bg-muted rounded-lg">
+                <h4 className="font-bold text-lg mb-4">Achievement Bonuses</h4>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {[
+                    { label: "Achievement Bonus", value: "5%" },
+                    { label: "Emerald Rank Achievement", value: "5%" },
+                    { label: "Gold Achievement Bonus", value: "4%" },
+                    { label: "Diamond 1 Achievement", value: "3%" },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center justify-between p-3 bg-background rounded-lg">
+                      <span className="font-medium">{item.label}</span>
+                      <span className="text-lg font-bold text-primary">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-sm text-muted-foreground mt-4 text-center">
+                  Note: Rank Achievement Bonus is based on ₦420 per PV
+                </p>
+              </div>
+
+              <div className="mt-6 grid md:grid-cols-4 gap-4">
+                {[
+                  { icon: Award, label: "Car Fund at Diamond Stage" },
+                  { icon: TrendingUp, label: "Financial Freedom" },
+                  { icon: Users, label: "SolidLife Experience" },
+                  { icon: Shield, label: "Travel the World" },
+                ].map((item) => (
+                  <div key={item.label} className="flex flex-col items-center p-4 bg-primary/5 rounded-lg text-center">
+                    <item.icon className="w-8 h-8 text-primary mb-2" />
+                    <span className="text-sm font-medium">{item.label}</span>
                   </div>
                 ))}
-              </div>
-              <div className="mt-8 p-6 bg-muted rounded-lg">
-                <h4 className="font-bold text-lg mb-3">Additional Bonuses:</h4>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-primary" />
-                    <span>Fast Start Bonus for new recruiters</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-primary" />
-                    <span>Leadership Bonus for top performers</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-primary" />
-                    <span>Monthly Incentive Trips and Awards</span>
-                  </li>
-                </ul>
               </div>
             </Card>
           </div>
