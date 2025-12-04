@@ -3,6 +3,9 @@
 ## Project info
 
 **Web URL**: https://affiliate-ignite-ui.lovable.app
+**Users login URL**: https://affiliate-ignite-ui.lovable.app/login
+user@solidlife.com
+Password: demo123
 **Admin URL**: https://affiliate-ignite-ui.lovable.app/admin
 
 
