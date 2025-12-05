@@ -6,7 +6,11 @@ import { toast } from "sonner";
 import productCocoa from "@/assets/product-cocoa-1.jpg";
 import productPhyto from "@/assets/product-phyto.jpg";
 import productGreenTea from "@/assets/product-green-tea.jpg";
-import productImmuneBooster from "@/assets/product-immune-booster.jpg";
+import productLemonPlus from "@/assets/product-lemon-plus.jpg";
+import productDateSyrup from "@/assets/product-date-syrup.jpg";
+import productCocoaDate from "@/assets/product-cocoa-date.jpg";
+import productCoffeeMomentum from "@/assets/product-coffee-momentum.jpg";
+import productNaturesFiber from "@/assets/product-natures-fiber.jpg";
 
 const Products = () => {
   const products = [
@@ -34,7 +38,7 @@ const Products = () => {
       description: "Natural lemon-based wellness drink for immune support and detoxification. 42 sachets per pack.",
       price: 12500,
       points: 15,
-      image: productImmuneBooster,
+      image: productLemonPlus,
       benefits: ["Immune support", "Detoxification", "Vitamin C boost", "Refreshing taste"]
     },
     {
@@ -43,7 +47,7 @@ const Products = () => {
       description: "Premium natural date syrup - a healthy sweetener alternative packed with nutrients. 500ml bottle.",
       price: 8250,
       points: 10,
-      image: productCocoa,
+      image: productDateSyrup,
       benefits: ["Natural sweetener", "Rich in minerals", "Energy boost", "Digestive health"]
     },
     {
@@ -52,7 +56,7 @@ const Products = () => {
       description: "Premium natural date syrup - a healthy sweetener alternative packed with nutrients. 250ml bottle.",
       price: 4125,
       points: 5,
-      image: productCocoa,
+      image: productDateSyrup,
       benefits: ["Natural sweetener", "Rich in minerals", "Energy boost", "Digestive health"]
     },
     {
@@ -61,7 +65,7 @@ const Products = () => {
       description: "Delicious cocoa and date blend for energy and wellness. 10 sachets per pack.",
       price: 5500,
       points: 5,
-      image: productCocoa,
+      image: productCocoaDate,
       benefits: ["Natural energy", "Rich in antioxidants", "Heart health", "Mood enhancer"]
     },
     {
@@ -79,7 +83,7 @@ const Products = () => {
       description: "Premium wellness coffee blend for energy and focus. 10 sachets per pack.",
       price: 5500,
       points: 5,
-      image: productCocoa,
+      image: productCoffeeMomentum,
       benefits: ["Mental clarity", "Natural energy", "Metabolism boost", "Antioxidant rich"]
     },
     {
@@ -88,7 +92,7 @@ const Products = () => {
       description: "Natural dietary fiber supplement for digestive health and wellness. 1kg pack.",
       price: 6000,
       points: 5,
-      image: productPhyto,
+      image: productNaturesFiber,
       benefits: ["Digestive health", "Weight management", "Blood sugar support", "Colon cleanse"]
     },
   ];

@@ -11,7 +11,11 @@ import { toast } from "sonner";
 import productCocoa from "@/assets/product-cocoa-1.jpg";
 import productPhyto from "@/assets/product-phyto.jpg";
 import productGreenTea from "@/assets/product-green-tea.jpg";
-import productImmuneBooster from "@/assets/product-immune-booster.jpg";
+import productLemonPlus from "@/assets/product-lemon-plus.jpg";
+import productDateSyrup from "@/assets/product-date-syrup.jpg";
+import productCocoaDate from "@/assets/product-cocoa-date.jpg";
+import productCoffeeMomentum from "@/assets/product-coffee-momentum.jpg";
+import productNaturesFiber from "@/assets/product-natures-fiber.jpg";
 
 const Products = () => {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -46,7 +50,7 @@ const Products = () => {
       stock: 280,
       sold: 1543,
       status: "Active",
-      image: productImmuneBooster
+      image: productLemonPlus
     },
     { 
       id: 4, 
@@ -56,7 +60,7 @@ const Products = () => {
       stock: 200,
       sold: 890,
       status: "Active",
-      image: productCocoa
+      image: productDateSyrup
     },
     { 
       id: 5, 
@@ -66,7 +70,7 @@ const Products = () => {
       stock: 350,
       sold: 1200,
       status: "Active",
-      image: productCocoa
+      image: productDateSyrup
     },
     { 
       id: 6, 
@@ -76,7 +80,7 @@ const Products = () => {
       stock: 400,
       sold: 980,
       status: "Active",
-      image: productCocoa
+      image: productCocoaDate
     },
     { 
       id: 7, 
@@ -96,7 +100,7 @@ const Products = () => {
       stock: 290,
       sold: 750,
       status: "Active",
-      image: productCocoa
+      image: productCoffeeMomentum
     },
     { 
       id: 9, 
@@ -106,7 +110,7 @@ const Products = () => {
       stock: 220,
       sold: 650,
       status: "Active",
-      image: productPhyto
+      image: productNaturesFiber
     },
   ];
 
