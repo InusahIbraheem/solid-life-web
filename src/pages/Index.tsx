@@ -7,11 +7,27 @@ import heroImage from "@/assets/hero-image.jpg";
 import productCocoa from "@/assets/product-cocoa-1.jpg";
 import productPhyto from "@/assets/product-phyto.jpg";
 import productGreenTea from "@/assets/product-green-tea.jpg";
-import productImmuneBooster from "@/assets/product-immune-booster.jpg";
+import productLemonPlus from "@/assets/product-lemon-plus.jpg";
+import productDateSyrup from "@/assets/product-date-syrup.jpg";
+import productCocoaDate from "@/assets/product-cocoa-date.jpg";
+import productCoffeeMomentum from "@/assets/product-coffee-momentum.jpg";
+import productNaturesFiber from "@/assets/product-natures-fiber.jpg";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
 
 const Index = () => {
+  const products = [
+    { name: "Phyto Power (42 Sachets)", price: "₦12,500", pv: "15 PV", image: productPhyto, desc: "Natural phytochemicals for immune support" },
+    { name: "Green Tea (42 Sachets)", price: "₦12,500", pv: "15 PV", image: productGreenTea, desc: "Organic green tea for detox and wellness" },
+    { name: "Lemon Plus (42 Sachets)", price: "₦12,500", pv: "15 PV", image: productLemonPlus, desc: "Lemon wellness drink for immune support" },
+    { name: "Date Syrup (500ml)", price: "₦8,250", pv: "10 PV", image: productDateSyrup, desc: "Premium natural date syrup sweetener" },
+    { name: "Date Syrup (250ml)", price: "₦4,125", pv: "5 PV", image: productDateSyrup, desc: "Natural date syrup in convenient size" },
+    { name: "Cocoa Date (10 Sachets)", price: "₦5,500", pv: "5 PV", image: productCocoaDate, desc: "Cocoa and date wellness blend" },
+    { name: "Cocoa Power Juggernaut (10 Sachets)", price: "₦5,500", pv: "5 PV", image: productCocoa, desc: "Premium cocoa for enhanced vitality" },
+    { name: "Coffee Momentum (10 Sachets)", price: "₦5,500", pv: "5 PV", image: productCoffeeMomentum, desc: "Wellness coffee for energy and focus" },
+    { name: "Nature's Fiber (1kg)", price: "₦6,000", pv: "5 PV", image: productNaturesFiber, desc: "Natural fiber for digestive health" },
+  ];
+
   return (
     <div className="min-h-screen">
       {/* Navigation */}
@@ -173,59 +189,25 @@ const Index = () => {
               100% natural wellness products that deliver real results
             </p>
           </div>
-          <div className="grid md:grid-cols-4 gap-6 max-w-7xl mx-auto">
-            <Card className="overflow-hidden hover:shadow-elevated transition-all">
-              <div className="aspect-square overflow-hidden">
-                <img src={productCocoa} alt="Cocoa Power Juggernaut" className="w-full h-full object-cover hover:scale-105 transition-transform" />
-              </div>
-              <CardContent className="p-6">
-                <h3 className="text-lg font-bold mb-2">Cocoa Power Juggernaut</h3>
-                <p className="text-muted-foreground mb-4 text-sm">Premium cocoa blend with phytoestrogens for enhanced vitality</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xl font-bold text-primary">₦15,000</span>
-                  <Button size="sm">Learn More</Button>
+          <div className="grid md:grid-cols-3 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {products.map((product, index) => (
+              <Card key={index} className="overflow-hidden hover:shadow-elevated transition-all">
+                <div className="aspect-square overflow-hidden">
+                  <img src={product.image} alt={product.name} className="w-full h-full object-cover hover:scale-105 transition-transform" />
                 </div>
-              </CardContent>
-            </Card>
-            <Card className="overflow-hidden hover:shadow-elevated transition-all">
-              <div className="aspect-square overflow-hidden">
-                <img src={productPhyto} alt="Phytochemicals & Anti-Ageing" className="w-full h-full object-cover hover:scale-105 transition-transform" />
-              </div>
-              <CardContent className="p-6">
-                <h3 className="text-lg font-bold mb-2">Organic Anti-Ageing Product</h3>
-                <p className="text-muted-foreground mb-4 text-sm">Natural phytochemicals for healthy immune system</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xl font-bold text-primary">₦18,000</span>
-                  <Button size="sm">Learn More</Button>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="overflow-hidden hover:shadow-elevated transition-all">
-              <div className="aspect-square overflow-hidden">
-                <img src={productGreenTea} alt="Pure Organic Green Tea" className="w-full h-full object-cover hover:scale-105 transition-transform" />
-              </div>
-              <CardContent className="p-6">
-                <h3 className="text-lg font-bold mb-2">Pure Organic Green Tea</h3>
-                <p className="text-muted-foreground mb-4 text-sm">100% natural green tea for detox and weight management</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xl font-bold text-primary">₦12,000</span>
-                  <Button size="sm">Learn More</Button>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="overflow-hidden hover:shadow-elevated transition-all">
-              <div className="aspect-square overflow-hidden">
-                <img src={productImmuneBooster} alt="Immune Booster" className="w-full h-full object-cover hover:scale-105 transition-transform" />
-              </div>
-              <CardContent className="p-6">
-                <h3 className="text-lg font-bold mb-2">Immune Booster</h3>
-                <p className="text-muted-foreground mb-4 text-sm">Natural immune system support for overall wellness</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xl font-bold text-primary">₦14,000</span>
-                  <Button size="sm">Learn More</Button>
-                </div>
-              </CardContent>
-            </Card>
+                <CardContent className="p-4">
+                  <h3 className="text-base font-bold mb-1">{product.name}</h3>
+                  <p className="text-muted-foreground mb-3 text-sm">{product.desc}</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-lg font-bold text-primary">{product.price}</span>
+                      <span className="text-xs text-muted-foreground ml-2">{product.pv}</span>
+                    </div>
+                    <Button size="sm">Order</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
