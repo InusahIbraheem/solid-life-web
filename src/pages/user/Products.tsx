@@ -12,39 +12,84 @@ const Products = () => {
   const products = [
     {
       id: 1,
-      name: "Cocoa Power Juggernaut",
-      description: "Premium cocoa blend with theobromine and phytoestrogens for enhanced vitality and wellness. Contains 12 cups per sachet.",
-      price: 15000,
-      points: 150,
-      image: productCocoa,
-      benefits: ["Enhanced sexual performance", "Boost immune system", "Improved cardiovascular health"]
-    },
-    {
-      id: 2,
-      name: "Organic Anti-Ageing Product",
-      description: "100% natural phytochemicals for healthy immune system support and cellular rejuvenation. Packaged exclusively in sachets.",
-      price: 18000,
-      points: 180,
+      name: "Phyto Power (42 Sachets)",
+      description: "100% natural phytochemicals for healthy immune system support and cellular rejuvenation. 42 sachets per pack.",
+      price: 12500,
+      points: 15,
       image: productPhyto,
       benefits: ["Fight infections", "Antioxidant effect", "Boost immunity", "Promote healthy aging"]
     },
     {
-      id: 3,
-      name: "Pure Organic Green Tea Extra",
-      description: "100% natural organic green tea for detoxification, weight management and overall wellness. High in antioxidants.",
-      price: 12000,
-      points: 120,
+      id: 2,
+      name: "Green Tea (42 Sachets)",
+      description: "100% natural organic green tea for detoxification, weight management and overall wellness. 42 sachets per pack.",
+      price: 12500,
+      points: 15,
       image: productGreenTea,
-      benefits: ["Detoxification", "Weight management", "High antioxidants", "Boost metabolism", "Improve brain function"]
+      benefits: ["Detoxification", "Weight management", "High antioxidants", "Boost metabolism"]
+    },
+    {
+      id: 3,
+      name: "Lemon Plus (42 Sachets)",
+      description: "Natural lemon-based wellness drink for immune support and detoxification. 42 sachets per pack.",
+      price: 12500,
+      points: 15,
+      image: productImmuneBooster,
+      benefits: ["Immune support", "Detoxification", "Vitamin C boost", "Refreshing taste"]
     },
     {
       id: 4,
-      name: "Immune Booster",
-      description: "Natural immune system support formula to strengthen your body's defenses and promote overall wellness.",
-      price: 14000,
-      points: 140,
-      image: productImmuneBooster,
-      benefits: ["Strengthen immunity", "Fight infections", "Boost energy", "Support overall health"]
+      name: "Date Syrup (500ml)",
+      description: "Premium natural date syrup - a healthy sweetener alternative packed with nutrients. 500ml bottle.",
+      price: 8250,
+      points: 10,
+      image: productCocoa,
+      benefits: ["Natural sweetener", "Rich in minerals", "Energy boost", "Digestive health"]
+    },
+    {
+      id: 5,
+      name: "Date Syrup (250ml)",
+      description: "Premium natural date syrup - a healthy sweetener alternative packed with nutrients. 250ml bottle.",
+      price: 4125,
+      points: 5,
+      image: productCocoa,
+      benefits: ["Natural sweetener", "Rich in minerals", "Energy boost", "Digestive health"]
+    },
+    {
+      id: 6,
+      name: "Cocoa Date (10 Sachets)",
+      description: "Delicious cocoa and date blend for energy and wellness. 10 sachets per pack.",
+      price: 5500,
+      points: 5,
+      image: productCocoa,
+      benefits: ["Natural energy", "Rich in antioxidants", "Heart health", "Mood enhancer"]
+    },
+    {
+      id: 7,
+      name: "Cocoa Power Juggernaut (10 Sachets)",
+      description: "Premium cocoa blend with theobromine for enhanced vitality and wellness. 10 sachets per pack.",
+      price: 5500,
+      points: 5,
+      image: productCocoa,
+      benefits: ["Enhanced vitality", "Boost immune system", "Cardiovascular health", "Natural energy"]
+    },
+    {
+      id: 8,
+      name: "Coffee Momentum (10 Sachets)",
+      description: "Premium wellness coffee blend for energy and focus. 10 sachets per pack.",
+      price: 5500,
+      points: 5,
+      image: productCocoa,
+      benefits: ["Mental clarity", "Natural energy", "Metabolism boost", "Antioxidant rich"]
+    },
+    {
+      id: 9,
+      name: "Nature's Fiber (1kg)",
+      description: "Natural dietary fiber supplement for digestive health and wellness. 1kg pack.",
+      price: 6000,
+      points: 5,
+      image: productPhyto,
+      benefits: ["Digestive health", "Weight management", "Blood sugar support", "Colon cleanse"]
     },
   ];
 
@@ -72,8 +117,8 @@ const Products = () => {
               </div>
               <CardContent className="p-6 space-y-4">
                 <div>
-                  <h3 className="text-2xl font-bold mb-2">{product.name}</h3>
-                  <p className="text-muted-foreground">{product.description}</p>
+                  <h3 className="text-xl font-bold mb-2">{product.name}</h3>
+                  <p className="text-muted-foreground text-sm">{product.description}</p>
                 </div>
 
                 <div>
@@ -87,8 +132,8 @@ const Products = () => {
 
                 <div className="flex items-center justify-between pt-4 border-t">
                   <div>
-                    <div className="text-3xl font-bold text-primary">₦{product.price.toLocaleString()}</div>
-                    <div className="text-sm text-muted-foreground">{product.points} points</div>
+                    <div className="text-2xl font-bold text-primary">₦{product.price.toLocaleString()}</div>
+                    <div className="text-sm text-muted-foreground">{product.points} PV</div>
                   </div>
                   <Button onClick={() => addToCart(product.name)} className="gradient-primary text-white">
                     <ShoppingCart className="w-4 h-4 mr-2" />

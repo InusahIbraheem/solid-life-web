@@ -20,43 +20,93 @@ const Products = () => {
   const products = [
     { 
       id: 1, 
-      name: "Cocoa Power Juggernaut", 
-      price: 15000, 
-      points: 150, 
+      name: "Phyto Power (42 Sachets)", 
+      price: 12500, 
+      points: 15, 
       stock: 450,
       sold: 2345,
-      status: "Active",
-      image: productCocoa
-    },
-    { 
-      id: 2, 
-      name: "Organic Anti-Ageing Product", 
-      price: 18000, 
-      points: 180, 
-      stock: 320,
-      sold: 1876,
       status: "Active",
       image: productPhyto
     },
     { 
-      id: 3, 
-      name: "Pure Organic Green Tea", 
-      price: 12000, 
-      points: 120, 
-      stock: 280,
-      sold: 1543,
+      id: 2, 
+      name: "Green Tea (42 Sachets)", 
+      price: 12500, 
+      points: 15, 
+      stock: 320,
+      sold: 1876,
       status: "Active",
       image: productGreenTea
     },
     { 
+      id: 3, 
+      name: "Lemon Plus (42 Sachets)", 
+      price: 12500, 
+      points: 15, 
+      stock: 280,
+      sold: 1543,
+      status: "Active",
+      image: productImmuneBooster
+    },
+    { 
       id: 4, 
-      name: "Immune Booster", 
-      price: 14000, 
-      points: 140, 
+      name: "Date Syrup (500ml)", 
+      price: 8250, 
+      points: 10, 
       stock: 200,
       sold: 890,
       status: "Active",
-      image: productImmuneBooster
+      image: productCocoa
+    },
+    { 
+      id: 5, 
+      name: "Date Syrup (250ml)", 
+      price: 4125, 
+      points: 5, 
+      stock: 350,
+      sold: 1200,
+      status: "Active",
+      image: productCocoa
+    },
+    { 
+      id: 6, 
+      name: "Cocoa Date (10 Sachets)", 
+      price: 5500, 
+      points: 5, 
+      stock: 400,
+      sold: 980,
+      status: "Active",
+      image: productCocoa
+    },
+    { 
+      id: 7, 
+      name: "Cocoa Power Juggernaut (10 Sachets)", 
+      price: 5500, 
+      points: 5, 
+      stock: 380,
+      sold: 1100,
+      status: "Active",
+      image: productCocoa
+    },
+    { 
+      id: 8, 
+      name: "Coffee Momentum (10 Sachets)", 
+      price: 5500, 
+      points: 5, 
+      stock: 290,
+      sold: 750,
+      status: "Active",
+      image: productCocoa
+    },
+    { 
+      id: 9, 
+      name: "Nature's Fiber (1kg)", 
+      price: 6000, 
+      points: 5, 
+      stock: 220,
+      sold: 650,
+      status: "Active",
+      image: productPhyto
     },
   ];
 
@@ -76,6 +126,11 @@ const Products = () => {
     toast.success("Product saved successfully!");
     setShowAddForm(false);
   };
+
+  const totalProducts = products.length;
+  const totalStock = products.reduce((sum, p) => sum + p.stock, 0);
+  const totalSold = products.reduce((sum, p) => sum + p.sold, 0);
+  const totalRevenue = products.reduce((sum, p) => sum + (p.sold * p.price), 0);
 
   return (
     <AdminLayout>
@@ -133,13 +188,13 @@ const Products = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="price">Price (₦)</Label>
-                    <Input id="price" type="number" placeholder="15000" />
+                    <Input id="price" type="number" placeholder="12500" />
                   </div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="points">Points</Label>
-                    <Input id="points" type="number" placeholder="150" />
+                    <Label htmlFor="points">PV (Point Value)</Label>
+                    <Input id="points" type="number" placeholder="15" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="stock">Stock Quantity</Label>
@@ -166,25 +221,25 @@ const Products = () => {
         <div className="grid md:grid-cols-4 gap-6">
           <Card className="shadow-soft">
             <CardContent className="pt-6">
-              <div className="text-3xl font-bold text-primary mb-2">2</div>
+              <div className="text-3xl font-bold text-primary mb-2">{totalProducts}</div>
               <div className="text-muted-foreground">Total Products</div>
             </CardContent>
           </Card>
           <Card className="shadow-soft">
             <CardContent className="pt-6">
-              <div className="text-3xl font-bold text-success mb-2">770</div>
+              <div className="text-3xl font-bold text-success mb-2">{totalStock.toLocaleString()}</div>
               <div className="text-muted-foreground">In Stock</div>
             </CardContent>
           </Card>
           <Card className="shadow-soft">
             <CardContent className="pt-6">
-              <div className="text-3xl font-bold text-secondary mb-2">4,221</div>
+              <div className="text-3xl font-bold text-secondary mb-2">{totalSold.toLocaleString()}</div>
               <div className="text-muted-foreground">Total Sold</div>
             </CardContent>
           </Card>
           <Card className="shadow-soft">
             <CardContent className="pt-6">
-              <div className="text-3xl font-bold text-accent mb-2">₦69M</div>
+              <div className="text-3xl font-bold text-accent mb-2">₦{(totalRevenue / 1000000).toFixed(1)}M</div>
               <div className="text-muted-foreground">Revenue</div>
             </CardContent>
           </Card>
@@ -201,7 +256,7 @@ const Products = () => {
                   <TableHead>Image</TableHead>
                   <TableHead>Product Name</TableHead>
                   <TableHead>Price</TableHead>
-                  <TableHead>Points</TableHead>
+                  <TableHead>PV</TableHead>
                   <TableHead>Stock</TableHead>
                   <TableHead>Sold</TableHead>
                   <TableHead>Status</TableHead>
@@ -216,7 +271,7 @@ const Products = () => {
                     </TableCell>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell className="font-bold text-primary">₦{product.price.toLocaleString()}</TableCell>
-                    <TableCell>{product.points} pts</TableCell>
+                    <TableCell>{product.points} PV</TableCell>
                     <TableCell>{product.stock}</TableCell>
                     <TableCell>{product.sold}</TableCell>
                     <TableCell>
