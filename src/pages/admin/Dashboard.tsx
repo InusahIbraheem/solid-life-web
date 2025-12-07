@@ -3,12 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, ShoppingBag, DollarSign, TrendingUp, Search, FileText, Printer, Building2, Calendar } from "lucide-react";
+import { Users, ShoppingBag, DollarSign, TrendingUp, Search, FileText, FileDown, Building2, Calendar, CheckCircle, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const Dashboard = () => {
   const [distributorSearch, setDistributorSearch] = useState("");
+  const [selectedMember, setSelectedMember] = useState("");
 
   const stats = [
     {
@@ -52,6 +55,7 @@ const Dashboard = () => {
     newRegistrations: 234,
     productSales: "₦15,250,000",
     activeDistributors: 1892,
+    status: "On Track",
   };
 
   const yearlyPerformance = {
@@ -61,6 +65,7 @@ const Dashboard = () => {
     totalVAT: "₦7,387,500",
     newRegistrations: 2845,
     averageMonthlyGrowth: "8.5%",
+    status: "Exceeding Target",
   };
 
   const recentUsers = [
@@ -123,6 +128,19 @@ const Dashboard = () => {
       downlines: [
         { id: "SL-00015", name: "Ada Johnson", rank: "Gold", volume: { currency: "₦85,000", points: "100 PV" }, referrals: 5 },
         { id: "SL-00023", name: "Chidi Nwachukwu", rank: "Emerald", volume: { currency: "₦62,000", points: "75 PV" }, referrals: 3 },
+        { id: "SL-00031", name: "Blessing Okoro", rank: "Junior", volume: { currency: "₦42,000", points: "50 PV" }, referrals: 2 },
+      ],
+    },
+    {
+      id: "SL-00002",
+      name: "Amina Bello",
+      rank: "Gold",
+      personalVolume: { currency: "₦95,000", points: "115 PV" },
+      teamVolume: { currency: "₦850,000", points: "1,020 PV" },
+      directReferrals: 8,
+      downlines: [
+        { id: "SL-00045", name: "Musa Ibrahim", rank: "Emerald", volume: { currency: "₦55,000", points: "65 PV" }, referrals: 4 },
+        { id: "SL-00052", name: "Fatima Yusuf", rank: "Junior", volume: { currency: "₦38,000", points: "45 PV" }, referrals: 1 },
       ],
     },
   ];
@@ -135,9 +153,81 @@ const Dashboard = () => {
     toast.info(`Searching for distributor: ${distributorSearch}`);
   };
 
-  const handleGenerateReport = () => {
-    toast.success("Generating printable monthly report...");
-    // In production, this would generate a PDF report
+  const handleGenerateReport = (memberId?: string) => {
+    const doc = new jsPDF();
+    const currentDate = new Date().toLocaleDateString();
+    const reportMonth = monthlyPerformance.month;
+
+    // Filter members if specific ID provided
+    const membersToReport = memberId 
+      ? memberReports.filter(m => m.id === memberId || m.name.toLowerCase().includes(memberId.toLowerCase()))
+      : memberReports;
+
+    if (membersToReport.length === 0) {
+      toast.error("No member found with that ID or name");
+      return;
+    }
+
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(34, 139, 34);
+    doc.text("SolidLife MLM Nigeria Ltd", 105, 20, { align: "center" });
+    
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text("Monthly Business Report", 105, 30, { align: "center" });
+    doc.text(`Report Period: ${reportMonth}`, 105, 38, { align: "center" });
+    doc.text(`Generated: ${currentDate}`, 105, 46, { align: "center" });
+
+    let yPosition = 60;
+
+    membersToReport.forEach((member, index) => {
+      if (yPosition > 250) {
+        doc.addPage();
+        yPosition = 20;
+      }
+
+      // Member Header
+      doc.setFontSize(12);
+      doc.setTextColor(34, 139, 34);
+      doc.text(`Member: ${member.name} (${member.id})`, 14, yPosition);
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10);
+      doc.text(`Rank: ${member.rank}`, 14, yPosition + 7);
+      doc.text(`Personal Volume: ${member.personalVolume.currency} / ${member.personalVolume.points}`, 14, yPosition + 14);
+      doc.text(`Team Volume: ${member.teamVolume.currency} / ${member.teamVolume.points}`, 14, yPosition + 21);
+      doc.text(`Direct Referrals: ${member.directReferrals}`, 14, yPosition + 28);
+
+      yPosition += 38;
+
+      // Downline Table
+      if (member.downlines.length > 0) {
+        autoTable(doc, {
+          startY: yPosition,
+          head: [["ID", "Name", "Rank", "Volume (₦/PV)", "Referrals"]],
+          body: member.downlines.map((d) => [
+            d.id,
+            d.name,
+            d.rank,
+            `${d.volume.currency} / ${d.volume.points}`,
+            d.referrals.toString(),
+          ]),
+          styles: { fontSize: 9 },
+          headStyles: { fillColor: [34, 139, 34] },
+          margin: { left: 14 },
+        });
+
+        yPosition = (doc as any).lastAutoTable.finalY + 15;
+      }
+
+      if (index < membersToReport.length - 1) {
+        doc.setDrawColor(200, 200, 200);
+        doc.line(14, yPosition - 5, 196, yPosition - 5);
+      }
+    });
+
+    doc.save(`Business_Report_${reportMonth.replace(" ", "_")}.pdf`);
+    toast.success("Monthly business report exported as PDF");
   };
 
   return (
@@ -175,6 +265,10 @@ const Dashboard = () => {
               <Calendar className="h-5 w-5 text-primary" />
               Monthly Performance Overview - {monthlyPerformance.month}
             </CardTitle>
+            <span className="flex items-center gap-1 text-sm font-medium text-success">
+              <CheckCircle className="h-4 w-4" />
+              {monthlyPerformance.status}
+            </span>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -204,11 +298,15 @@ const Dashboard = () => {
 
         {/* Yearly Performance Overview */}
         <Card className="shadow-soft">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
               Yearly Performance Overview - {yearlyPerformance.year}
             </CardTitle>
+            <span className="flex items-center gap-1 text-sm font-medium text-success">
+              <CheckCircle className="h-4 w-4" />
+              {yearlyPerformance.status}
+            </span>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -267,10 +365,18 @@ const Dashboard = () => {
               <FileText className="h-5 w-5 text-primary" />
               Monthly Business Reports
             </CardTitle>
-            <Button onClick={handleGenerateReport}>
-              <Printer className="h-4 w-4 mr-2" />
-              Generate Report
-            </Button>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Member ID or Name (optional)"
+                value={selectedMember}
+                onChange={(e) => setSelectedMember(e.target.value)}
+                className="w-48"
+              />
+              <Button onClick={() => handleGenerateReport(selectedMember || undefined)}>
+                <FileDown className="h-4 w-4 mr-2" />
+                Export PDF
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
