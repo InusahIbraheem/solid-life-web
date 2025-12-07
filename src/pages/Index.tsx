@@ -78,20 +78,6 @@ const Index = () => {
                   Watch Video
                 </Button>
               </div>
-              <div className="grid grid-cols-3 gap-6 mt-12">
-                <div>
-                  <div className="text-3xl font-bold text-secondary">50K+</div>
-                  <div className="text-white/80">Active Members</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-secondary">₦2B+</div>
-                  <div className="text-white/80">Paid Out</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-secondary">10</div>
-                  <div className="text-white/80">Levels Deep</div>
-                </div>
-              </div>
             </div>
             <div className="relative">
               <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full"></div>
@@ -164,7 +150,7 @@ const Index = () => {
             <div className="text-center">
               <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto mb-6 shadow-elevated">1</div>
               <h3 className="text-2xl font-bold mb-3">Sign Up</h3>
-              <p className="text-muted-foreground">Create your free account and get your unique referral link</p>
+              <p className="text-muted-foreground">Create your account and get your unique referral link</p>
             </div>
             <div className="text-center">
               <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto mb-6 shadow-elevated">2</div>

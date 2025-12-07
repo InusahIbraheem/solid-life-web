@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -15,8 +16,36 @@ const Signup = () => {
     phone: "",
     password: "",
     confirmPassword: "",
-    referralCode: "",
+    // Physical Address
+    country: "",
+    state: "",
+    localGovernment: "",
+    city: "",
+    streetNo: "",
+    // Referral Info
+    uplineName: "",
+    uplineId: "",
+    sponsorName: "",
+    sponsorId: "",
+    // Bank Details
+    bankName: "",
+    accountNumber: "",
+    accountName: "",
+    // Tax/ID
+    tinNo: "",
+    bvnNo: "",
   });
+
+  // Mock data for select options
+  const countries = ["Nigeria", "Ghana", "Kenya", "South Africa"];
+  const nigeriaStates = ["Lagos", "Abuja", "Rivers", "Imo", "Kano", "Oyo", "Delta", "Enugu", "Kaduna", "Anambra"];
+  const localGovernments = {
+    "Lagos": ["Ikeja", "Victoria Island", "Lekki", "Surulere", "Yaba", "Ikoyi"],
+    "Abuja": ["Garki", "Wuse", "Maitama", "Asokoro", "Gwarinpa"],
+    "Imo": ["Owerri Municipal", "Owerri West", "Owerri North", "Isiala Mbano", "Orlu"],
+    "Rivers": ["Port Harcourt", "Obio-Akpor", "Eleme", "Okrika"],
+  };
+  const banks = ["Access Bank", "First Bank", "GTBank", "UBA", "Zenith Bank", "Union Bank", "Sterling Bank", "Fidelity Bank", "Polaris Bank", "Wema Bank"];
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +57,16 @@ const Signup = () => {
 
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match");
+      return;
+    }
+
+    if (!formData.bvnNo) {
+      toast.error("BVN Number is required");
+      return;
+    }
+
+    if (!formData.country || !formData.state || !formData.city) {
+      toast.error("Please complete your address details");
       return;
     }
 
@@ -43,11 +82,20 @@ const Signup = () => {
     });
   };
 
+  const handleSelectChange = (field: string, value: string) => {
+    setFormData({
+      ...formData,
+      [field]: value,
+    });
+  };
+
+  const currentLGs = formData.state ? (localGovernments[formData.state as keyof typeof localGovernments] || []) : [];
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4 py-8">
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgxMjQsMTc5LDY2LDAuMDMpIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-40"></div>
       
-      <Card className="w-full max-w-md shadow-elevated relative z-10">
+      <Card className="w-full max-w-2xl shadow-elevated relative z-10">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <img src={logo} alt="Solid Life" className="h-20 w-20" />
@@ -58,72 +106,258 @@ const Signup = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSignup} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name *</Label>
-              <Input
-                id="fullName"
-                type="text"
-                placeholder="John Doe"
-                value={formData.fullName}
-                onChange={handleChange}
-                required
-              />
+          <form onSubmit={handleSignup} className="space-y-6">
+            {/* Personal Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-primary border-b pb-2">Personal Information</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name *</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="John Doe"
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number *</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="+234 800 000 0000"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address *</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
+
+            {/* Physical Address */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-primary border-b pb-2">Physical Address</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Country *</Label>
+                  <Select value={formData.country} onValueChange={(value) => handleSelectChange("country", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countries.map((country) => (
+                        <SelectItem key={country} value={country}>{country}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>State *</Label>
+                  <Select value={formData.state} onValueChange={(value) => handleSelectChange("state", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select State" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {nigeriaStates.map((state) => (
+                        <SelectItem key={state} value={state}>{state}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Local Government / County *</Label>
+                  <Select value={formData.localGovernment} onValueChange={(value) => handleSelectChange("localGovernment", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Local Government" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {currentLGs.map((lg) => (
+                        <SelectItem key={lg} value={lg}>{lg}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="city">City *</Label>
+                  <Input
+                    id="city"
+                    type="text"
+                    placeholder="Enter City"
+                    value={formData.city}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="streetNo">Street No. / Address</Label>
+                  <Input
+                    id="streetNo"
+                    type="text"
+                    placeholder="123 Main Street"
+                    value={formData.streetNo}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number *</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="+234 800 000 0000"
-                value={formData.phone}
-                onChange={handleChange}
-                required
-              />
+
+            {/* Referral Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-primary border-b pb-2">Referral Information</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="uplineName">Upline Name</Label>
+                  <Input
+                    id="uplineName"
+                    type="text"
+                    placeholder="Enter Upline Name"
+                    value={formData.uplineName}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="uplineId">Upline ID No.</Label>
+                  <Input
+                    id="uplineId"
+                    type="text"
+                    placeholder="Enter Upline ID"
+                    value={formData.uplineId}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sponsorName">Sponsor Name</Label>
+                  <Input
+                    id="sponsorName"
+                    type="text"
+                    placeholder="Enter Sponsor Name"
+                    value={formData.sponsorName}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sponsorId">Sponsor ID No.</Label>
+                  <Input
+                    id="sponsorId"
+                    type="text"
+                    placeholder="Enter Sponsor ID"
+                    value={formData.sponsorId}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="referralCode">Referral Code (Optional)</Label>
-              <Input
-                id="referralCode"
-                type="text"
-                placeholder="Enter referral code"
-                value={formData.referralCode}
-                onChange={handleChange}
-              />
+
+            {/* Bank Account Details */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-primary border-b pb-2">Bank Account Details</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Bank Name *</Label>
+                  <Select value={formData.bankName} onValueChange={(value) => handleSelectChange("bankName", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Bank" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {banks.map((bank) => (
+                        <SelectItem key={bank} value={bank}>{bank}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="accountNumber">Account Number *</Label>
+                  <Input
+                    id="accountNumber"
+                    type="text"
+                    placeholder="0123456789"
+                    value={formData.accountNumber}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="accountName">Account Name *</Label>
+                  <Input
+                    id="accountName"
+                    type="text"
+                    placeholder="Account Holder Name"
+                    value={formData.accountName}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password *</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
+
+            {/* Tax & Identification */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-primary border-b pb-2">Tax & Identification</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="tinNo">TIN No. (Optional)</Label>
+                  <Input
+                    id="tinNo"
+                    type="text"
+                    placeholder="Tax Identification Number"
+                    value={formData.tinNo}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bvnNo">BVN No. *</Label>
+                  <Input
+                    id="bvnNo"
+                    type="text"
+                    placeholder="Bank Verification Number"
+                    value={formData.bvnNo}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password *</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-              />
+
+            {/* Password */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-primary border-b pb-2">Security</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password *</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="••••••••"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
             </div>
+
             <Button type="submit" className="w-full gradient-primary text-white" size="lg">
               Create Account
             </Button>
