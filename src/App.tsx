@@ -24,6 +24,7 @@ import AdminProducts from "./pages/admin/Products";
 import AdminOrders from "./pages/admin/Orders";
 import AdminSupport from "./pages/admin/Support";
 import AdminSettings from "./pages/admin/Settings";
+import AdminDSCManagement from "./pages/admin/DSCManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ const App = () => (
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/referrals" element={<AdminReferrals />} />
+          <Route path="/admin/dsc" element={<AdminDSCManagement />} />
           <Route path="/admin/products" element={<AdminProducts />} />
           <Route path="/admin/orders" element={<AdminOrders />} />
           <Route path="/admin/support" element={<AdminSupport />} />

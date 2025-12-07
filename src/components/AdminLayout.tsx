@@ -21,6 +21,7 @@ import {
   Settings,
   LogOut,
   Network,
+  Building2,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { Button } from "./ui/button";
@@ -30,6 +31,7 @@ const adminMenuItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Users", url: "/admin/users", icon: Users },
   { title: "Referrals", url: "/admin/referrals", icon: Network },
+  { title: "DSC Management", url: "/admin/dsc", icon: Building2 },
   { title: "Products", url: "/admin/products", icon: ShoppingBag },
   { title: "Orders", url: "/admin/orders", icon: ShoppingCart },
   { title: "Support", url: "/admin/support", icon: MessageSquare },
