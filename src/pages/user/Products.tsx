@@ -1,8 +1,13 @@
 import { UserLayout } from "@/components/UserLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ShoppingCart, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { PaymentProofUpload } from "@/components/PaymentProofUpload";
 import productCocoa from "@/assets/product-cocoa-1.jpg";
 import productPhyto from "@/assets/product-phyto.jpg";
 import productGreenTea from "@/assets/product-green-tea.jpg";
@@ -13,6 +18,12 @@ import productCoffeeMomentum from "@/assets/product-coffee-momentum.jpg";
 import productNaturesFiber from "@/assets/product-natures-fiber.jpg";
 
 const Products = () => {
+  const { user } = useAuth();
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [paymentProofUrl, setPaymentProofUrl] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
   const products = [
     {
       id: 1,
@@ -97,8 +108,47 @@ const Products = () => {
     },
   ];
 
-  const addToCart = (productName: string) => {
-    toast.success(`${productName} added to cart!`);
+  const handlePurchase = async () => {
+    if (!user) {
+      toast.error("Please sign in to make a purchase");
+      return;
+    }
+
+    if (!paymentProofUrl) {
+      toast.error("Please upload proof of payment");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase.from("orders").insert({
+        user_id: user.id,
+        amount: selectedProduct.price,
+        quantity: 1,
+        points_earned: selectedProduct.points,
+        payment_proof_url: paymentProofUrl,
+        payment_status: "pending",
+        delivery_status: "processing",
+      });
+
+      if (error) throw error;
+
+      toast.success(`Order placed for ${selectedProduct.name}! Awaiting payment verification.`);
+      setDialogOpen(false);
+      setSelectedProduct(null);
+      setPaymentProofUrl("");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to place order");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openPurchaseDialog = (product: any) => {
+    setSelectedProduct(product);
+    setPaymentProofUrl("");
+    setDialogOpen(true);
   };
 
   return (
@@ -139,15 +189,67 @@ const Products = () => {
                     <div className="text-2xl font-bold text-primary">₦{product.price.toLocaleString()}</div>
                     <div className="text-sm text-muted-foreground">{product.points} PV</div>
                   </div>
-                  <Button onClick={() => addToCart(product.name)} className="gradient-primary text-white">
+                  <Button onClick={() => openPurchaseDialog(product)} className="gradient-primary text-white">
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    Add to Cart
+                    Purchase
                   </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
+
+        {/* Purchase Dialog */}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Complete Purchase</DialogTitle>
+            </DialogHeader>
+            
+            {selectedProduct && (
+              <div className="space-y-4">
+                <div className="flex gap-4">
+                  <img
+                    src={selectedProduct.image}
+                    alt={selectedProduct.name}
+                    className="w-20 h-20 object-cover rounded"
+                  />
+                  <div>
+                    <h3 className="font-semibold">{selectedProduct.name}</h3>
+                    <p className="text-2xl font-bold text-primary">
+                      ₦{selectedProduct.price.toLocaleString()}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{selectedProduct.points} PV</p>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Transfer ₦{selectedProduct.price.toLocaleString()} to:
+                  </p>
+                  <div className="text-sm space-y-1">
+                    <p><strong>Bank:</strong> First Bank of Nigeria</p>
+                    <p><strong>Account Name:</strong> SolidLife MLM Nigeria Ltd</p>
+                    <p><strong>Account Number:</strong> 1234567890</p>
+                  </div>
+                </div>
+
+                <PaymentProofUpload
+                  label="Upload Proof of Payment *"
+                  onUploadComplete={setPaymentProofUrl}
+                />
+
+                <Button 
+                  onClick={handlePurchase} 
+                  className="w-full gradient-primary text-white"
+                  disabled={isSubmitting || !paymentProofUrl}
+                >
+                  {isSubmitting ? "Processing..." : "Confirm Purchase"}
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </UserLayout>
   );

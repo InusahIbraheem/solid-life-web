@@ -4,18 +4,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { PaymentProofUpload } from "@/components/PaymentProofUpload";
 import logo from "@/assets/logo.png";
 
 const Signup = () => {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentProofUrl, setPaymentProofUrl] = useState("");
+  
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     phone: "",
-    password: "",
-    confirmPassword: "",
     // Physical Address
     country: "",
     state: "",
@@ -36,6 +41,13 @@ const Signup = () => {
     bvnNo: "",
   });
 
+  useEffect(() => {
+    if (!loading && user) {
+      // Pre-fill email if user is logged in
+      setFormData(prev => ({ ...prev, email: user.email || "" }));
+    }
+  }, [user, loading]);
+
   // Mock data for select options
   const countries = ["Nigeria", "Ghana", "Kenya", "South Africa"];
   const nigeriaStates = ["Lagos", "Abuja", "Rivers", "Imo", "Kano", "Oyo", "Delta", "Enugu", "Kaduna", "Anambra"];
@@ -47,16 +59,11 @@ const Signup = () => {
   };
   const banks = ["Access Bank", "First Bank", "GTBank", "UBA", "Zenith Bank", "Union Bank", "Sterling Bank", "Fidelity Bank", "Polaris Bank", "Wema Bank"];
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.fullName || !formData.email || !formData.phone || !formData.password) {
+    if (!formData.fullName || !formData.email || !formData.phone) {
       toast.error("Please fill in all required fields");
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match");
       return;
     }
 
@@ -70,9 +77,68 @@ const Signup = () => {
       return;
     }
 
-    // Mock signup - in production, this would create account in backend
-    toast.success("Account created successfully!");
-    navigate("/dashboard");
+    if (!paymentProofUrl) {
+      toast.error("Please upload proof of payment");
+      return;
+    }
+
+    if (!user) {
+      toast.error("Please sign in first");
+      navigate("/auth");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const nameParts = formData.fullName.split(" ");
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(" ");
+
+      // Update profile
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          first_name: firstName,
+          last_name: lastName,
+          phone: formData.phone,
+          country: formData.country,
+          state: formData.state,
+          local_government: formData.localGovernment,
+          city: formData.city,
+          street_no: formData.streetNo,
+          upline_name: formData.uplineName,
+          upline_id: formData.uplineId,
+          sponsor_name: formData.sponsorName,
+          sponsor_id: formData.sponsorId,
+          bank_name: formData.bankName,
+          account_number: formData.accountNumber,
+          account_name: formData.accountName,
+          tin_no: formData.tinNo,
+          bvn_no: formData.bvnNo,
+        })
+        .eq("user_id", user.id);
+
+      if (profileError) throw profileError;
+
+      // Create registration with payment proof
+      const { error: regError } = await supabase
+        .from("registrations")
+        .insert({
+          user_id: user.id,
+          payment_proof_url: paymentProofUrl,
+          payment_status: "pending",
+        });
+
+      if (regError) throw regError;
+
+      toast.success("Registration submitted! Awaiting payment verification.");
+      navigate("/dashboard");
+    } catch (error: any) {
+      toast.error(error.message || "Registration failed");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,9 +166,9 @@ const Signup = () => {
           <div className="flex justify-center mb-4">
             <img src={logo} alt="Solid Life" className="h-20 w-20" />
           </div>
-          <CardTitle className="text-3xl font-bold">Join Solid Life</CardTitle>
+          <CardTitle className="text-3xl font-bold">Complete Your Registration</CardTitle>
           <CardDescription className="text-base">
-            Start your journey to financial freedom
+            Registration Fee: ₦15,000 | Start your journey to financial freedom
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -130,6 +196,7 @@ const Signup = () => {
                     placeholder="you@example.com"
                     value={formData.email}
                     onChange={handleChange}
+                    disabled={!!user}
                     required
                   />
                 </div>
@@ -329,43 +396,33 @@ const Signup = () => {
               </div>
             </div>
 
-            {/* Password */}
+            {/* Payment Proof Upload */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-primary border-b pb-2">Security</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password *</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    placeholder="••••••••"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    required
-                  />
+              <h3 className="text-lg font-semibold text-primary border-b pb-2">Registration Payment (₦15,000)</h3>
+              <div className="p-4 bg-muted/50 rounded-lg mb-4">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Please transfer ₦15,000 to the company account and upload proof of payment below.
+                </p>
+                <div className="text-sm space-y-1">
+                  <p><strong>Bank:</strong> First Bank of Nigeria</p>
+                  <p><strong>Account Name:</strong> SolidLife MLM Nigeria Ltd</p>
+                  <p><strong>Account Number:</strong> 1234567890</p>
                 </div>
               </div>
+              <PaymentProofUpload
+                label="Upload Proof of Payment *"
+                onUploadComplete={setPaymentProofUrl}
+              />
             </div>
 
-            <Button type="submit" className="w-full gradient-primary text-white" size="lg">
-              Create Account
+            <Button type="submit" className="w-full gradient-primary text-white" size="lg" disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Complete Registration"}
             </Button>
           </form>
           
           <div className="mt-6 text-center text-sm">
-            <span className="text-muted-foreground">Already have an account? </span>
-            <Link to="/login" className="text-primary font-semibold hover:underline">
+            <span className="text-muted-foreground">Already registered? </span>
+            <Link to="/auth" className="text-primary font-semibold hover:underline">
               Sign in
             </Link>
           </div>
