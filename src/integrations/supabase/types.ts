@@ -14,16 +14,368 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      dsc_centers: {
+        Row: {
+          address: string | null
+          center_number: string
+          city: string | null
+          created_at: string | null
+          credit_line: number | null
+          email: string | null
+          id: string
+          operator_name: string
+          phone: string | null
+          product_sales: number | null
+          registrations: number | null
+          state: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          center_number: string
+          city?: string | null
+          created_at?: string | null
+          credit_line?: number | null
+          email?: string | null
+          id?: string
+          operator_name: string
+          phone?: string | null
+          product_sales?: number | null
+          registrations?: number | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          center_number?: string
+          city?: string | null
+          created_at?: string | null
+          credit_line?: number | null
+          email?: string | null
+          id?: string
+          operator_name?: string
+          phone?: string | null
+          product_sales?: number | null
+          registrations?: number | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          amount: number
+          created_at: string | null
+          delivery_status: string | null
+          id: string
+          payment_proof_url: string | null
+          payment_status: string | null
+          points_earned: number | null
+          product_id: string | null
+          quantity: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          delivery_status?: string | null
+          id?: string
+          payment_proof_url?: string | null
+          payment_status?: string | null
+          points_earned?: number | null
+          product_id?: string | null
+          quantity?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          delivery_status?: string | null
+          id?: string
+          payment_proof_url?: string | null
+          payment_status?: string | null
+          points_earned?: number | null
+          product_id?: string | null
+          quantity?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          points: number | null
+          price: number
+          sold: number | null
+          status: string | null
+          stock: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          points?: number | null
+          price: number
+          sold?: number | null
+          status?: string | null
+          stock?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          points?: number | null
+          price?: number
+          sold?: number | null
+          status?: string | null
+          stock?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          avatar_url: string | null
+          bank_name: string | null
+          bvn_no: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          email: string | null
+          first_name: string | null
+          id: string
+          kyc_verified: boolean | null
+          last_name: string | null
+          level: string | null
+          local_government: string | null
+          phone: string | null
+          points: number | null
+          sponsor_id: string | null
+          sponsor_name: string | null
+          state: string | null
+          street_no: string | null
+          tin_no: string | null
+          total_earnings: number | null
+          updated_at: string | null
+          upline_id: string | null
+          upline_name: string | null
+          user_id: string
+          wallet_balance: number | null
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          avatar_url?: string | null
+          bank_name?: string | null
+          bvn_no?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          kyc_verified?: boolean | null
+          last_name?: string | null
+          level?: string | null
+          local_government?: string | null
+          phone?: string | null
+          points?: number | null
+          sponsor_id?: string | null
+          sponsor_name?: string | null
+          state?: string | null
+          street_no?: string | null
+          tin_no?: string | null
+          total_earnings?: number | null
+          updated_at?: string | null
+          upline_id?: string | null
+          upline_name?: string | null
+          user_id: string
+          wallet_balance?: number | null
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          avatar_url?: string | null
+          bank_name?: string | null
+          bvn_no?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          kyc_verified?: boolean | null
+          last_name?: string | null
+          level?: string | null
+          local_government?: string | null
+          phone?: string | null
+          points?: number | null
+          sponsor_id?: string | null
+          sponsor_name?: string | null
+          state?: string | null
+          street_no?: string | null
+          tin_no?: string | null
+          total_earnings?: number | null
+          updated_at?: string | null
+          upline_id?: string | null
+          upline_name?: string | null
+          user_id?: string
+          wallet_balance?: number | null
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          commission: number | null
+          created_at: string | null
+          id: string
+          level: number | null
+          referred_id: string | null
+          referrer_id: string | null
+          status: string | null
+        }
+        Insert: {
+          commission?: number | null
+          created_at?: string | null
+          id?: string
+          level?: number | null
+          referred_id?: string | null
+          referrer_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          commission?: number | null
+          created_at?: string | null
+          id?: string
+          level?: number | null
+          referred_id?: string | null
+          referrer_id?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      registrations: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          id: string
+          payment_proof_url: string | null
+          payment_status: string | null
+          user_id: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          id?: string
+          payment_proof_url?: string | null
+          payment_status?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          id?: string
+          payment_proof_url?: string | null
+          payment_status?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string | null
+          id: string
+          status: string | null
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          status?: string | null
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          status?: string | null
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +502,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const

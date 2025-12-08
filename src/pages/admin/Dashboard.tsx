@@ -3,154 +3,132 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, ShoppingBag, DollarSign, TrendingUp, Search, FileText, FileDown, Building2, Calendar, CheckCircle, AlertCircle } from "lucide-react";
-import { useState } from "react";
+import { Users, ShoppingBag, DollarSign, TrendingUp, Search, FileText, FileDown, Building2, Calendar, CheckCircle, AlertCircle, ArrowUp, ArrowDown } from "lucide-react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 const Dashboard = () => {
   const [distributorSearch, setDistributorSearch] = useState("");
   const [selectedMember, setSelectedMember] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalSales: 0,
+    productsSold: 0,
+    activeMembers: 0,
+  });
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [dscCenters, setDscCenters] = useState<any[]>([]);
+  const [registrations, setRegistrations] = useState<any[]>([]);
 
-  const stats = [
-    {
-      title: "Total Users",
-      value: "5,234",
-      change: "+12.5%",
-      icon: Users,
-      color: "text-primary",
-      bgColor: "bg-primary/10",
-    },
-    {
-      title: "Total Sales",
-      value: "₦12.5M",
-      change: "+8.2%",
-      icon: DollarSign,
-      color: "text-success",
-      bgColor: "bg-success/10",
-    },
-    {
-      title: "Products Sold",
-      value: "8,456",
-      change: "+15.3%",
-      icon: ShoppingBag,
-      color: "text-secondary",
-      bgColor: "bg-secondary/10",
-    },
-    {
-      title: "Active Members",
-      value: "4,891",
-      change: "+5.7%",
-      icon: TrendingUp,
-      color: "text-accent",
-      bgColor: "bg-accent/10",
-    },
-  ];
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch profiles
+      const { data: profilesData, count: profilesCount } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact" });
+      
+      if (profilesData) setProfiles(profilesData);
+
+      // Fetch orders
+      const { data: ordersData } = await supabase
+        .from("orders")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (ordersData) setOrders(ordersData);
+
+      // Fetch DSC centers
+      const { data: dscData } = await supabase
+        .from("dsc_centers")
+        .select("*");
+      
+      if (dscData) setDscCenters(dscData);
+
+      // Fetch registrations
+      const { data: regData } = await supabase
+        .from("registrations")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (regData) setRegistrations(regData);
+
+      // Calculate stats
+      const totalSales = ordersData?.reduce((sum, order) => sum + Number(order.amount || 0), 0) || 0;
+      const productsSold = ordersData?.reduce((sum, order) => sum + (order.quantity || 0), 0) || 0;
+      const activeMembers = profilesData?.filter(p => p.kyc_verified)?.length || 0;
+
+      setStats({
+        totalUsers: profilesCount || 0,
+        totalSales,
+        productsSold,
+        activeMembers,
+      });
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Monthly performance calculations
+  const currentMonth = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const monthlyOrders = orders.filter(o => {
+    const orderDate = new Date(o.created_at);
+    const now = new Date();
+    return orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear();
+  });
+  const monthlyRegistrations = registrations.filter(r => {
+    const regDate = new Date(r.created_at);
+    const now = new Date();
+    return regDate.getMonth() === now.getMonth() && regDate.getFullYear() === now.getFullYear();
+  });
 
   const monthlyPerformance = {
-    month: "December 2024",
-    totalPayout: "₦8,750,000",
-    vatDeductible: "₦656,250",
-    newRegistrations: 234,
-    productSales: "₦15,250,000",
-    activeDistributors: 1892,
-    status: "On Track",
+    month: currentMonth,
+    totalPayout: monthlyOrders.reduce((sum, o) => sum + Number(o.amount || 0) * 0.33, 0),
+    vatDeductible: monthlyOrders.reduce((sum, o) => sum + Number(o.amount || 0) * 0.075, 0),
+    newRegistrations: monthlyRegistrations.length,
+    productSales: monthlyOrders.reduce((sum, o) => sum + Number(o.amount || 0), 0),
+    activeDistributors: profiles.filter(p => p.kyc_verified).length,
+    status: monthlyOrders.length > 10 ? "On Track" : "Needs Attention",
   };
 
   const yearlyPerformance = {
-    year: "2024",
-    totalPayout: "₦98,500,000",
-    totalSales: "₦185,750,000",
-    totalVAT: "₦7,387,500",
-    newRegistrations: 2845,
+    year: new Date().getFullYear().toString(),
+    totalPayout: orders.reduce((sum, o) => sum + Number(o.amount || 0) * 0.33, 0),
+    totalSales: orders.reduce((sum, o) => sum + Number(o.amount || 0), 0),
+    totalVAT: orders.reduce((sum, o) => sum + Number(o.amount || 0) * 0.075, 0),
+    newRegistrations: registrations.length,
     averageMonthlyGrowth: "8.5%",
-    status: "Exceeding Target",
+    status: registrations.length > 50 ? "Exceeding Target" : "On Track",
   };
 
-  const recentUsers = [
-    { id: 1, name: "John Doe", email: "john@example.com", joined: "2024-02-20", status: "Active" },
-    { id: 2, name: "Jane Smith", email: "jane@example.com", joined: "2024-02-19", status: "Pending KYC" },
-    { id: 3, name: "Bob Wilson", email: "bob@example.com", joined: "2024-02-18", status: "Active" },
-  ];
-
-  const topSellers = [
-    { name: "Cocoa Power Juggernaut", sold: 2345, revenue: "₦35.2M" },
-    { name: "Phyto Power", sold: 1876, revenue: "₦33.8M" },
-  ];
-
-  // Mock DSC data
-  const distributorServiceCentres = [
-    {
-      id: "DSC-001",
-      name: "Lagos Central DSC",
-      operator: "Chief Emmanuel Okafor",
-      address: "15 Broad Street, Lagos Island, Lagos State",
-      phone: "+234 803 456 7890",
-      email: "lagos.central@solidlife.ng",
-      monthlyRegistrations: 45,
-      productSales: "₦2,450,000",
-      creditLine: "₦350,000",
-    },
-    {
-      id: "DSC-002",
-      name: "Abuja Main DSC",
-      operator: "Mrs. Amina Bello",
-      address: "Plot 234 Wuse Zone 5, Abuja FCT",
-      phone: "+234 806 789 0123",
-      email: "abuja.main@solidlife.ng",
-      monthlyRegistrations: 38,
-      productSales: "₦1,890,000",
-      creditLine: "₦180,000",
-    },
-    {
-      id: "DSC-003",
-      name: "Owerri Hub DSC",
-      operator: "Dr. Chukwu Eze",
-      address: "Umuozu Ezumoha, Isiala Mbano LGA, Imo State",
-      phone: "+234 809 012 3456",
-      email: "owerri.hub@solidlife.ng",
-      monthlyRegistrations: 52,
-      productSales: "₦3,120,000",
-      creditLine: "₦0",
-    },
-  ];
-
-  // Mock member report data
-  const memberReports = [
-    {
-      id: "SL-00001",
-      name: "Emmanuel Okafor",
-      rank: "Diamond 1",
-      personalVolume: { currency: "₦125,000", points: "150 PV" },
-      teamVolume: { currency: "₦1,250,000", points: "1,500 PV" },
-      directReferrals: 12,
-      downlines: [
-        { id: "SL-00015", name: "Ada Johnson", rank: "Gold", volume: { currency: "₦85,000", points: "100 PV" }, referrals: 5 },
-        { id: "SL-00023", name: "Chidi Nwachukwu", rank: "Emerald", volume: { currency: "₦62,000", points: "75 PV" }, referrals: 3 },
-        { id: "SL-00031", name: "Blessing Okoro", rank: "Junior", volume: { currency: "₦42,000", points: "50 PV" }, referrals: 2 },
-      ],
-    },
-    {
-      id: "SL-00002",
-      name: "Amina Bello",
-      rank: "Gold",
-      personalVolume: { currency: "₦95,000", points: "115 PV" },
-      teamVolume: { currency: "₦850,000", points: "1,020 PV" },
-      directReferrals: 8,
-      downlines: [
-        { id: "SL-00045", name: "Musa Ibrahim", rank: "Emerald", volume: { currency: "₦55,000", points: "65 PV" }, referrals: 4 },
-        { id: "SL-00052", name: "Fatima Yusuf", rank: "Junior", volume: { currency: "₦38,000", points: "45 PV" }, referrals: 1 },
-      ],
-    },
-  ];
-
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!distributorSearch.trim()) {
       toast.error("Please enter a name or ID to search");
       return;
     }
-    toast.info(`Searching for distributor: ${distributorSearch}`);
+    
+    const results = profiles.filter(p => 
+      p.first_name?.toLowerCase().includes(distributorSearch.toLowerCase()) ||
+      p.last_name?.toLowerCase().includes(distributorSearch.toLowerCase()) ||
+      p.id?.includes(distributorSearch)
+    );
+    
+    if (results.length > 0) {
+      toast.success(`Found ${results.length} distributor(s)`);
+    } else {
+      toast.info("No distributors found");
+    }
   };
 
   const handleGenerateReport = (memberId?: string) => {
@@ -158,10 +136,10 @@ const Dashboard = () => {
     const currentDate = new Date().toLocaleDateString();
     const reportMonth = monthlyPerformance.month;
 
-    // Filter members if specific ID provided
     const membersToReport = memberId 
-      ? memberReports.filter(m => m.id === memberId || m.name.toLowerCase().includes(memberId.toLowerCase()))
-      : memberReports;
+      ? profiles.filter(m => m.id?.includes(memberId) || 
+          `${m.first_name} ${m.last_name}`.toLowerCase().includes(memberId.toLowerCase()))
+      : profiles;
 
     if (membersToReport.length === 0) {
       toast.error("No member found with that ID or name");
@@ -187,38 +165,16 @@ const Dashboard = () => {
         yPosition = 20;
       }
 
-      // Member Header
       doc.setFontSize(12);
       doc.setTextColor(34, 139, 34);
-      doc.text(`Member: ${member.name} (${member.id})`, 14, yPosition);
+      doc.text(`Member: ${member.first_name || ''} ${member.last_name || ''} (${member.id?.slice(0, 8) || 'N/A'})`, 14, yPosition);
       doc.setTextColor(0, 0, 0);
       doc.setFontSize(10);
-      doc.text(`Rank: ${member.rank}`, 14, yPosition + 7);
-      doc.text(`Personal Volume: ${member.personalVolume.currency} / ${member.personalVolume.points}`, 14, yPosition + 14);
-      doc.text(`Team Volume: ${member.teamVolume.currency} / ${member.teamVolume.points}`, 14, yPosition + 21);
-      doc.text(`Direct Referrals: ${member.directReferrals}`, 14, yPosition + 28);
+      doc.text(`Rank: ${member.level || 'Junior'}`, 14, yPosition + 7);
+      doc.text(`Points: ${member.points || 0} PV`, 14, yPosition + 14);
+      doc.text(`Total Earnings: ₦${Number(member.total_earnings || 0).toLocaleString()}`, 14, yPosition + 21);
 
-      yPosition += 38;
-
-      // Downline Table
-      if (member.downlines.length > 0) {
-        autoTable(doc, {
-          startY: yPosition,
-          head: [["ID", "Name", "Rank", "Volume (₦/PV)", "Referrals"]],
-          body: member.downlines.map((d) => [
-            d.id,
-            d.name,
-            d.rank,
-            `${d.volume.currency} / ${d.volume.points}`,
-            d.referrals.toString(),
-          ]),
-          styles: { fontSize: 9 },
-          headStyles: { fillColor: [34, 139, 34] },
-          margin: { left: 14 },
-        });
-
-        yPosition = (doc as any).lastAutoTable.finalY + 15;
-      }
+      yPosition += 35;
 
       if (index < membersToReport.length - 1) {
         doc.setDrawColor(200, 200, 200);
@@ -230,6 +186,55 @@ const Dashboard = () => {
     toast.success("Monthly business report exported as PDF");
   };
 
+  const statsCards = [
+    {
+      title: "Total Users",
+      value: stats.totalUsers.toLocaleString(),
+      change: "+12.5%",
+      icon: Users,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+      trend: "up",
+    },
+    {
+      title: "Total Sales",
+      value: `₦${stats.totalSales.toLocaleString()}`,
+      change: "+8.2%",
+      icon: DollarSign,
+      color: "text-success",
+      bgColor: "bg-success/10",
+      trend: "up",
+    },
+    {
+      title: "Products Sold",
+      value: stats.productsSold.toLocaleString(),
+      change: "+15.3%",
+      icon: ShoppingBag,
+      color: "text-secondary",
+      bgColor: "bg-secondary/10",
+      trend: "up",
+    },
+    {
+      title: "Active Members",
+      value: stats.activeMembers.toLocaleString(),
+      change: "+5.7%",
+      icon: TrendingUp,
+      color: "text-accent",
+      bgColor: "bg-accent/10",
+      trend: "up",
+    },
+  ];
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -240,14 +245,17 @@ const Dashboard = () => {
 
         {/* Quick Stats */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat) => (
+          {statsCards.map((stat) => (
             <Card key={stat.title} className="shadow-soft hover:shadow-elevated transition-all">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className={`${stat.bgColor} ${stat.color} p-3 rounded-lg`}>
                     <stat.icon className="h-6 w-6" />
                   </div>
-                  <span className="text-sm font-medium text-success">{stat.change}</span>
+                  <span className={`text-sm font-medium flex items-center gap-1 ${stat.trend === 'up' ? 'text-success' : 'text-destructive'}`}>
+                    {stat.trend === 'up' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+                    {stat.change}
+                  </span>
                 </div>
                 <div>
                   <div className="text-2xl font-bold mb-1">{stat.value}</div>
@@ -265,23 +273,23 @@ const Dashboard = () => {
               <Calendar className="h-5 w-5 text-primary" />
               Monthly Performance Overview - {monthlyPerformance.month}
             </CardTitle>
-            <span className="flex items-center gap-1 text-sm font-medium text-success">
-              <CheckCircle className="h-4 w-4" />
+            <span className={`flex items-center gap-1 text-sm font-medium ${monthlyPerformance.status === 'On Track' ? 'text-success' : 'text-warning'}`}>
+              {monthlyPerformance.status === 'On Track' ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
               {monthlyPerformance.status}
             </span>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-4">
               <div className="p-4 bg-primary/10 rounded-lg text-center">
-                <div className="text-2xl font-bold text-primary">{monthlyPerformance.totalPayout}</div>
+                <div className="text-2xl font-bold text-primary">₦{monthlyPerformance.totalPayout.toLocaleString()}</div>
                 <div className="text-sm text-muted-foreground">Total Payout</div>
               </div>
               <div className="p-4 bg-destructive/10 rounded-lg text-center">
-                <div className="text-2xl font-bold text-destructive">{monthlyPerformance.vatDeductible}</div>
+                <div className="text-2xl font-bold text-destructive">₦{monthlyPerformance.vatDeductible.toLocaleString()}</div>
                 <div className="text-sm text-muted-foreground">VAT Deductible</div>
               </div>
               <div className="p-4 bg-secondary/10 rounded-lg text-center">
-                <div className="text-2xl font-bold text-secondary">{monthlyPerformance.productSales}</div>
+                <div className="text-2xl font-bold text-secondary">₦{monthlyPerformance.productSales.toLocaleString()}</div>
                 <div className="text-sm text-muted-foreground">Product Sales</div>
               </div>
               <div className="p-4 bg-success/10 rounded-lg text-center">
@@ -311,15 +319,15 @@ const Dashboard = () => {
           <CardContent>
             <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
               <div className="p-4 bg-muted rounded-lg text-center">
-                <div className="text-xl font-bold">{yearlyPerformance.totalPayout}</div>
+                <div className="text-xl font-bold">₦{yearlyPerformance.totalPayout.toLocaleString()}</div>
                 <div className="text-xs text-muted-foreground">Total Payout</div>
               </div>
               <div className="p-4 bg-muted rounded-lg text-center">
-                <div className="text-xl font-bold">{yearlyPerformance.totalSales}</div>
+                <div className="text-xl font-bold">₦{yearlyPerformance.totalSales.toLocaleString()}</div>
                 <div className="text-xs text-muted-foreground">Total Sales</div>
               </div>
               <div className="p-4 bg-muted rounded-lg text-center">
-                <div className="text-xl font-bold">{yearlyPerformance.totalVAT}</div>
+                <div className="text-xl font-bold">₦{yearlyPerformance.totalVAT.toLocaleString()}</div>
                 <div className="text-xs text-muted-foreground">Total VAT</div>
               </div>
               <div className="p-4 bg-muted rounded-lg text-center">
@@ -388,41 +396,29 @@ const Dashboard = () => {
                   <TableHead>Member ID</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Ranking</TableHead>
-                  <TableHead>Personal Volume (₦/PV)</TableHead>
-                  <TableHead>Team Volume (₦/PV)</TableHead>
-                  <TableHead>Referrals</TableHead>
+                  <TableHead>Points (PV)</TableHead>
+                  <TableHead>Total Earnings</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {memberReports.map((member) => (
-                  <>
-                    <TableRow key={member.id} className="bg-primary/5">
-                      <TableCell className="font-medium">{member.id}</TableCell>
-                      <TableCell className="font-semibold">{member.name}</TableCell>
-                      <TableCell>
-                        <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
-                          {member.rank}
-                        </span>
-                      </TableCell>
-                      <TableCell>{member.personalVolume.currency} / {member.personalVolume.points}</TableCell>
-                      <TableCell>{member.teamVolume.currency} / {member.teamVolume.points}</TableCell>
-                      <TableCell>{member.directReferrals}</TableCell>
-                    </TableRow>
-                    {member.downlines.map((downline) => (
-                      <TableRow key={downline.id} className="text-sm">
-                        <TableCell className="pl-8 text-muted-foreground">↳ {downline.id}</TableCell>
-                        <TableCell>{downline.name}</TableCell>
-                        <TableCell>
-                          <span className="px-2 py-1 bg-muted text-muted-foreground rounded-full text-xs">
-                            {downline.rank}
-                          </span>
-                        </TableCell>
-                        <TableCell>{downline.volume.currency} / {downline.volume.points}</TableCell>
-                        <TableCell>-</TableCell>
-                        <TableCell>{downline.referrals}</TableCell>
-                      </TableRow>
-                    ))}
-                  </>
+                {profiles.slice(0, 10).map((profile) => (
+                  <TableRow key={profile.id}>
+                    <TableCell className="font-medium">{profile.id?.slice(0, 8) || 'N/A'}</TableCell>
+                    <TableCell>{profile.first_name || ''} {profile.last_name || ''}</TableCell>
+                    <TableCell>
+                      <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
+                        {profile.level || 'Junior'}
+                      </span>
+                    </TableCell>
+                    <TableCell>{profile.points || 0} PV</TableCell>
+                    <TableCell>₦{Number(profile.total_earnings || 0).toLocaleString()}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${profile.kyc_verified ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+                        {profile.kyc_verified ? 'Verified' : 'Pending'}
+                      </span>
+                    </TableCell>
+                  </TableRow>
                 ))}
               </TableBody>
             </Table>
@@ -438,101 +434,48 @@ const Dashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Centre No.</TableHead>
-                    <TableHead>Name / Operator</TableHead>
-                    <TableHead>Location & Contact</TableHead>
-                    <TableHead>Monthly Registrations</TableHead>
-                    <TableHead>Product Sales</TableHead>
-                    <TableHead>Credit Line</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {distributorServiceCentres.map((dsc) => (
-                    <TableRow key={dsc.id}>
-                      <TableCell className="font-medium">{dsc.id}</TableCell>
-                      <TableCell>
-                        <div className="font-semibold">{dsc.name}</div>
-                        <div className="text-sm text-muted-foreground">{dsc.operator}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">{dsc.address}</div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          📞 {dsc.phone} | ✉️ {dsc.email}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-semibold text-success">{dsc.monthlyRegistrations}</span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-semibold text-primary">{dsc.productSales}</span>
-                      </TableCell>
-                      <TableCell>
-                        <span className={dsc.creditLine === "₦0" ? "text-success" : "text-warning font-semibold"}>
-                          {dsc.creditLine}
-                        </span>
-                      </TableCell>
+            {dscCenters.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Centre No.</TableHead>
+                      <TableHead>Operator</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Contact</TableHead>
+                      <TableHead>Registrations</TableHead>
+                      <TableHead>Sales</TableHead>
+                      <TableHead>Credit Line</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {dscCenters.map((dsc) => (
+                      <TableRow key={dsc.id}>
+                        <TableCell className="font-medium">{dsc.center_number}</TableCell>
+                        <TableCell>{dsc.operator_name}</TableCell>
+                        <TableCell className="max-w-xs">
+                          <div className="text-sm">{dsc.address}</div>
+                          <div className="text-xs text-muted-foreground">{dsc.city}, {dsc.state}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">{dsc.phone}</div>
+                          <div className="text-xs text-muted-foreground">{dsc.email}</div>
+                        </TableCell>
+                        <TableCell>{dsc.registrations || 0}</TableCell>
+                        <TableCell>₦{Number(dsc.product_sales || 0).toLocaleString()}</TableCell>
+                        <TableCell className={Number(dsc.credit_line || 0) > 0 ? 'text-destructive' : ''}>
+                          ₦{Number(dsc.credit_line || 0).toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">No DSC centres registered yet</p>
+            )}
           </CardContent>
         </Card>
-
-        {/* Recent Users & Top Sellers */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card className="shadow-soft">
-            <CardHeader>
-              <CardTitle>Recent Users</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentUsers.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between pb-4 border-b last:border-0 last:pb-0">
-                    <div>
-                      <div className="font-medium">{user.name}</div>
-                      <div className="text-sm text-muted-foreground">{user.email}</div>
-                      <div className="text-xs text-muted-foreground">Joined: {user.joined}</div>
-                    </div>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      user.status === 'Active' 
-                        ? 'bg-success/10 text-success' 
-                        : 'bg-warning/10 text-warning'
-                    }`}>
-                      {user.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-soft">
-            <CardHeader>
-              <CardTitle>Top Selling Products</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {topSellers.map((product, index) => (
-                  <div key={index} className="flex items-center justify-between pb-4 border-b last:border-0 last:pb-0">
-                    <div>
-                      <div className="font-medium">{product.name}</div>
-                      <div className="text-sm text-muted-foreground">{product.sold} units sold</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold text-primary">{product.revenue}</div>
-                      <div className="text-xs text-muted-foreground">Revenue</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </AdminLayout>
   );
