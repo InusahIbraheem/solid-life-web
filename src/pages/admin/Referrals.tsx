@@ -1,95 +1,95 @@
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Users, TrendingUp, Award, Search, Eye, Ban, CheckCircle } from "lucide-react";
-import { useState } from "react";
+import { Users, TrendingUp, Award, Search, Eye, Ban, CheckCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Referrals = () => {
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [referrals, setReferrals] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    totalReferrals: 0,
+    activeReferrals: 0,
+    totalCommissions: 0,
+  });
 
-  const referrals = [
-    {
-      id: 1,
-      referrer: "John Doe",
-      referrerId: "SL001",
-      referred: "Mary Johnson",
-      referredId: "SL045",
-      date: "2024-01-15",
-      level: 1,
-      commission: 4500,
-      status: "Active"
-    },
-    {
-      id: 2,
-      referrer: "John Doe",
-      referrerId: "SL001",
-      referred: "Peter Smith",
-      referredId: "SL046",
-      date: "2024-01-18",
-      level: 1,
-      commission: 4500,
-      status: "Active"
-    },
-    {
-      id: 3,
-      referrer: "Mary Johnson",
-      referrerId: "SL045",
-      referred: "Grace Obi",
-      referredId: "SL078",
-      date: "2024-01-20",
-      level: 2,
-      commission: 3000,
-      status: "Active"
-    },
-    {
-      id: 4,
-      referrer: "Peter Smith",
-      referrerId: "SL046",
-      referred: "David Eze",
-      referredId: "SL089",
-      date: "2024-01-22",
-      level: 2,
-      commission: 3000,
-      status: "Pending"
-    },
-    {
-      id: 5,
-      referrer: "Grace Obi",
-      referrerId: "SL078",
-      referred: "Sarah Adamu",
-      referredId: "SL102",
-      date: "2024-01-25",
-      level: 3,
-      commission: 2250,
-      status: "Active"
-    },
-  ];
+  useEffect(() => {
+    fetchReferrals();
+  }, []);
 
-  const topReferrers = [
-    { name: "John Doe", id: "SL001", referrals: 45, earnings: 250000 },
-    { name: "Mary Johnson", id: "SL045", referrals: 32, earnings: 180000 },
-    { name: "Peter Smith", id: "SL046", referrals: 28, earnings: 145000 },
-    { name: "Grace Obi", id: "SL078", referrals: 22, earnings: 98000 },
-  ];
+  const fetchReferrals = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("referrals")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-  const filteredReferrals = referrals.filter(
-    (r) =>
-      r.referrer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.referred.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.referrerId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.referredId.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      if (error) throw error;
 
-  const handleApprove = (id: number) => {
-    toast.success("Referral approved successfully!");
+      // Get profile info for referrers and referred
+      const referralsWithProfiles = await Promise.all(
+        (data || []).map(async (ref) => {
+          const { data: referrerProfile } = await supabase
+            .from("profiles")
+            .select("first_name, last_name, email")
+            .eq("user_id", ref.referrer_id)
+            .maybeSingle();
+          
+          const { data: referredProfile } = await supabase
+            .from("profiles")
+            .select("first_name, last_name, email")
+            .eq("user_id", ref.referred_id)
+            .maybeSingle();
+
+          return {
+            ...ref,
+            referrer: referrerProfile,
+            referred: referredProfile,
+          };
+        })
+      );
+
+      setReferrals(referralsWithProfiles);
+
+      // Calculate stats
+      const total = referralsWithProfiles.length;
+      const active = referralsWithProfiles.filter(r => r.status === "active").length;
+      const commissions = referralsWithProfiles.reduce((sum, r) => sum + Number(r.commission || 0), 0);
+
+      setStats({
+        totalReferrals: total,
+        activeReferrals: active,
+        totalCommissions: commissions,
+      });
+    } catch (error) {
+      console.error("Error fetching referrals:", error);
+      toast.error("Failed to load referrals");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSuspend = (id: number) => {
-    toast.success("Referral suspended!");
-  };
+  const filteredReferrals = referrals.filter((r) => {
+    const referrerName = `${r.referrer?.first_name || ""} ${r.referrer?.last_name || ""}`.toLowerCase();
+    const referredName = `${r.referred?.first_name || ""} ${r.referred?.last_name || ""}`.toLowerCase();
+    return referrerName.includes(searchTerm.toLowerCase()) || 
+           referredName.includes(searchTerm.toLowerCase());
+  });
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -107,7 +107,7 @@ const Referrals = () => {
                   <Users className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <div className="text-3xl font-bold">1,234</div>
+                  <div className="text-3xl font-bold">{stats.totalReferrals}</div>
                   <div className="text-muted-foreground text-sm">Total Referrals</div>
                 </div>
               </div>
@@ -120,7 +120,7 @@ const Referrals = () => {
                   <CheckCircle className="w-6 h-6 text-success" />
                 </div>
                 <div>
-                  <div className="text-3xl font-bold">1,180</div>
+                  <div className="text-3xl font-bold">{stats.activeReferrals}</div>
                   <div className="text-muted-foreground text-sm">Active Referrals</div>
                 </div>
               </div>
@@ -133,7 +133,7 @@ const Referrals = () => {
                   <TrendingUp className="w-6 h-6 text-secondary" />
                 </div>
                 <div>
-                  <div className="text-3xl font-bold">₦4.2M</div>
+                  <div className="text-3xl font-bold">₦{stats.totalCommissions.toLocaleString()}</div>
                   <div className="text-muted-foreground text-sm">Commissions Paid</div>
                 </div>
               </div>
@@ -146,7 +146,7 @@ const Referrals = () => {
                   <Award className="w-6 h-6 text-accent" />
                 </div>
                 <div>
-                  <div className="text-3xl font-bold">10</div>
+                  <div className="text-3xl font-bold">3</div>
                   <div className="text-muted-foreground text-sm">Levels Deep</div>
                 </div>
               </div>
@@ -154,23 +154,27 @@ const Referrals = () => {
           </Card>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          <Card className="md:col-span-2 shadow-soft">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>All Referrals</CardTitle>
-                <div className="relative w-64">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                  <Input
-                    placeholder="Search referrals..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
+        <Card className="shadow-soft">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>All Referrals</CardTitle>
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Search referrals..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
               </div>
-            </CardHeader>
-            <CardContent>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {filteredReferrals.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No referrals found
+              </div>
+            ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -188,29 +192,35 @@ const Referrals = () => {
                     <TableRow key={referral.id}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{referral.referrer}</div>
-                          <div className="text-xs text-muted-foreground">{referral.referrerId}</div>
+                          <div className="font-medium">
+                            {referral.referrer?.first_name || "N/A"} {referral.referrer?.last_name || ""}
+                          </div>
+                          <div className="text-xs text-muted-foreground">{referral.referrer?.email || ""}</div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{referral.referred}</div>
-                          <div className="text-xs text-muted-foreground">{referral.referredId}</div>
+                          <div className="font-medium">
+                            {referral.referred?.first_name || "N/A"} {referral.referred?.last_name || ""}
+                          </div>
+                          <div className="text-xs text-muted-foreground">{referral.referred?.email || ""}</div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
-                          Level {referral.level}
+                          Level {referral.level || 1}
                         </span>
                       </TableCell>
                       <TableCell className="font-bold text-primary">
-                        ₦{referral.commission.toLocaleString()}
+                        ₦{Number(referral.commission || 0).toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{referral.date}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {new Date(referral.created_at).toLocaleDateString()}
+                      </TableCell>
                       <TableCell>
                         <span
                           className={`px-2 py-1 rounded-full text-xs ${
-                            referral.status === "Active"
+                            referral.status === "active"
                               ? "bg-success/10 text-success"
                               : "bg-warning/10 text-warning"
                           }`}
@@ -223,76 +233,15 @@ const Referrals = () => {
                           <Button variant="outline" size="sm" title="View Details">
                             <Eye className="w-4 h-4" />
                           </Button>
-                          {referral.status === "Pending" && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleApprove(referral.id)}
-                              title="Approve"
-                            >
-                              <CheckCircle className="w-4 h-4 text-success" />
-                            </Button>
-                          )}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleSuspend(referral.id)}
-                            title="Suspend"
-                          >
-                            <Ban className="w-4 h-4 text-destructive" />
-                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-soft">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Award className="w-5 h-5 text-secondary" />
-                Top Referrers
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {topReferrers.map((referrer, index) => (
-                  <div
-                    key={referrer.id}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
-                  >
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
-                        index === 0
-                          ? "bg-secondary"
-                          : index === 1
-                          ? "bg-primary/80"
-                          : index === 2
-                          ? "bg-primary/60"
-                          : "bg-primary/40"
-                      }`}
-                    >
-                      {index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium">{referrer.name}</div>
-                      <div className="text-xs text-muted-foreground">{referrer.id}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold text-primary">{referrer.referrals}</div>
-                      <div className="text-xs text-muted-foreground">
-                        ₦{referrer.earnings.toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   );

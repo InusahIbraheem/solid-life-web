@@ -28,6 +28,7 @@ import {
 import logo from "@/assets/logo.png";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const userMenuItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -48,9 +49,11 @@ interface UserLayoutProps {
 
 export function UserLayout({ children }: UserLayoutProps) {
   const navigate = useNavigate();
+  const { signOut, user } = useAuth();
 
-  const handleLogout = () => {
-    navigate("/login");
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/auth");
   };
 
   return (

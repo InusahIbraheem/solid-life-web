@@ -1,24 +1,71 @@
+import { useState, useEffect } from "react";
 import { UserLayout } from "@/components/UserLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const Earnings = () => {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
+  const [commissions, setCommissions] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      fetchEarningsData();
+    }
+  }, [user]);
+
+  const fetchEarningsData = async () => {
+    try {
+      // Fetch profile
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      setProfile(profileData);
+
+      // Fetch commission transactions
+      const { data: txns } = await supabase
+        .from("wallet_transactions")
+        .select("*")
+        .eq("user_id", user?.id)
+        .in("type", ["commission", "bonus", "referral"])
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      setCommissions(txns || []);
+    } catch (error) {
+      console.error("Error fetching earnings:", error);
+      toast.error("Failed to load earnings data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate level earnings from referrals
   const levelEarnings = [
-    { level: 1, members: 23, commission: "30%", earned: 115000 },
-    { level: 2, members: 89, commission: "20%", earned: 89000 },
-    { level: 3, members: 234, commission: "15%", earned: 140400 },
-    { level: 4, members: 456, commission: "10%", earned: 91200 },
-    { level: 5, members: 678, commission: "8%", earned: 86400 },
+    { level: 1, members: 0, commission: "7%", earned: 0 },
+    { level: 2, members: 0, commission: "5%", earned: 0 },
+    { level: 3, members: 0, commission: "3%", earned: 0 },
   ];
 
-  const recentCommissions = [
-    { id: 1, from: "Alice Johnson", level: 1, product: "Cocoa Power", commission: "30%", amount: 4500, date: "2024-02-20" },
-    { id: 2, from: "Bob Smith", level: 1, product: "Anti-Ageing", commission: "30%", amount: 5400, date: "2024-02-19" },
-    { id: 3, from: "Carol White", level: 2, product: "Cocoa Power", commission: "20%", amount: 3000, date: "2024-02-18" },
-    { id: 4, from: "David Brown", level: 2, product: "Anti-Ageing", commission: "20%", amount: 3600, date: "2024-02-17" },
-  ];
+  const totalEarned = Number(profile?.total_earnings || 0);
 
-  const totalEarned = levelEarnings.reduce((sum, level) => sum + level.earned, 0);
+  if (loading) {
+    return (
+      <UserLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </UserLayout>
+    );
+  }
 
   return (
     <UserLayout>
@@ -37,58 +84,61 @@ const Earnings = () => {
           </Card>
           <Card className="shadow-soft">
             <CardContent className="pt-6">
-              <div className="text-3xl font-bold text-secondary mb-2">₦52,000</div>
-              <div className="text-muted-foreground">This Month</div>
+              <div className="text-3xl font-bold text-secondary mb-2">₦{Number(profile?.wallet_balance || 0).toLocaleString()}</div>
+              <div className="text-muted-foreground">Wallet Balance</div>
             </CardContent>
           </Card>
           <Card className="shadow-soft">
             <CardContent className="pt-6">
-              <div className="text-3xl font-bold text-success mb-2">₦12,500</div>
-              <div className="text-muted-foreground">This Week</div>
+              <div className="text-3xl font-bold text-success mb-2">{profile?.points || 0}</div>
+              <div className="text-muted-foreground">Total PV</div>
             </CardContent>
           </Card>
           <Card className="shadow-soft">
             <CardContent className="pt-6">
-              <div className="text-3xl font-bold text-accent mb-2">₦3,200</div>
-              <div className="text-muted-foreground">Today</div>
+              <div className="text-3xl font-bold text-accent mb-2">{profile?.level || "Junior"}</div>
+              <div className="text-muted-foreground">Current Rank</div>
             </CardContent>
           </Card>
         </div>
 
         <Card className="shadow-soft">
           <CardHeader>
-            <CardTitle>Earnings by Level</CardTitle>
+            <CardTitle>Commission Structure</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Level</TableHead>
-                  <TableHead>Members</TableHead>
-                  <TableHead>Commission Rate</TableHead>
-                  <TableHead>Total Earned</TableHead>
-                  <TableHead>Progress</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {levelEarnings.map((level) => (
-                  <TableRow key={level.level}>
-                    <TableCell className="font-bold">Level {level.level}</TableCell>
-                    <TableCell>{level.members} members</TableCell>
-                    <TableCell className="font-semibold text-primary">{level.commission}</TableCell>
-                    <TableCell className="font-bold text-primary">₦{level.earned.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div 
-                          className="bg-primary h-2 rounded-full transition-all" 
-                          style={{ width: `${(level.earned / totalEarned) * 100}%` }}
-                        ></div>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="p-4 rounded-lg border bg-primary/5 border-primary/20">
+                <div className="font-bold text-primary text-lg">Retail Profit</div>
+                <div className="text-2xl font-bold">20%</div>
+                <div className="text-sm text-muted-foreground">On product sales</div>
+              </div>
+              <div className="p-4 rounded-lg border bg-secondary/5 border-secondary/20">
+                <div className="font-bold text-secondary text-lg">Sponsor Bonus</div>
+                <div className="text-2xl font-bold">33%</div>
+                <div className="text-sm text-muted-foreground">For direct sponsorship</div>
+              </div>
+              <div className="p-4 rounded-lg border bg-success/5 border-success/20">
+                <div className="font-bold text-success text-lg">Personal Purchase</div>
+                <div className="text-2xl font-bold">10%</div>
+                <div className="text-sm text-muted-foreground">On your own purchases</div>
+              </div>
+              <div className="p-4 rounded-lg border">
+                <div className="font-bold text-lg">1st Level</div>
+                <div className="text-2xl font-bold text-primary">7%</div>
+                <div className="text-sm text-muted-foreground">Commission</div>
+              </div>
+              <div className="p-4 rounded-lg border">
+                <div className="font-bold text-lg">2nd Level</div>
+                <div className="text-2xl font-bold text-primary">5%</div>
+                <div className="text-sm text-muted-foreground">Commission</div>
+              </div>
+              <div className="p-4 rounded-lg border">
+                <div className="font-bold text-lg">3rd Level</div>
+                <div className="text-2xl font-bold text-primary">3%</div>
+                <div className="text-sm text-muted-foreground">Commission</div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -97,30 +147,42 @@ const Earnings = () => {
             <CardTitle>Recent Commissions</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>From</TableHead>
-                  <TableHead>Level</TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Commission</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentCommissions.map((commission) => (
-                  <TableRow key={commission.id}>
-                    <TableCell className="font-medium">{commission.from}</TableCell>
-                    <TableCell>Level {commission.level}</TableCell>
-                    <TableCell>{commission.product}</TableCell>
-                    <TableCell className="font-semibold text-primary">{commission.commission}</TableCell>
-                    <TableCell className="font-bold text-success">+₦{commission.amount.toLocaleString()}</TableCell>
-                    <TableCell>{commission.date}</TableCell>
+            {commissions.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No commissions yet. Start referring and selling to earn!
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {commissions.map((commission) => (
+                    <TableRow key={commission.id}>
+                      <TableCell className="font-medium">{commission.description}</TableCell>
+                      <TableCell className="capitalize">{commission.type}</TableCell>
+                      <TableCell className="font-bold text-success">+₦{Number(commission.amount).toLocaleString()}</TableCell>
+                      <TableCell>{new Date(commission.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          commission.status === 'completed' 
+                            ? 'bg-success/10 text-success' 
+                            : 'bg-warning/10 text-warning'
+                        }`}>
+                          {commission.status}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>
