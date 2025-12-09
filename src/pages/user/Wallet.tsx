@@ -1,24 +1,116 @@
+import { useState, useEffect } from "react";
 import { UserLayout } from "@/components/UserLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Wallet as WalletIcon, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Wallet as WalletIcon, ArrowUpRight, ArrowDownRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Wallet = () => {
-  const handleWithdraw = () => {
-    toast.success("Withdrawal request submitted!");
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [totalWithdrawn, setTotalWithdrawn] = useState(0);
+  const [pendingBalance, setPendingBalance] = useState(0);
+  const [transactions, setTransactions] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      fetchWalletData();
+    }
+  }, [user]);
+
+  const fetchWalletData = async () => {
+    try {
+      // Fetch profile for wallet balance
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("wallet_balance")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      if (profile) {
+        setWalletBalance(Number(profile.wallet_balance) || 0);
+      }
+
+      // Fetch transactions
+      const { data: txns, error } = await supabase
+        .from("wallet_transactions")
+        .select("*")
+        .eq("user_id", user?.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      setTransactions(txns || []);
+
+      // Calculate totals
+      const withdrawn = txns?.filter(t => t.type === "withdrawal" && t.status === "completed")
+        .reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+      const pending = txns?.filter(t => t.status === "pending")
+        .reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+
+      setTotalWithdrawn(withdrawn);
+      setPendingBalance(pending);
+    } catch (error) {
+      console.error("Error fetching wallet data:", error);
+      toast.error("Failed to load wallet data");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const transactions = [
-    { id: 1, type: "credit", description: "Commission from Level 1", amount: 12500, date: "2024-02-20", status: "Completed" },
-    { id: 2, type: "debit", description: "Product purchase", amount: -15000, date: "2024-02-19", status: "Completed" },
-    { id: 3, type: "credit", description: "Referral bonus", amount: 5000, date: "2024-02-18", status: "Completed" },
-    { id: 4, type: "debit", description: "Withdrawal", amount: -50000, date: "2024-02-15", status: "Completed" },
-    { id: 5, type: "credit", description: "Level upgrade bonus", amount: 25000, date: "2024-02-14", status: "Completed" },
-  ];
+  const handleWithdraw = async () => {
+    const amount = Number(withdrawAmount);
+    if (amount < 10000) {
+      toast.error("Minimum withdrawal is ₦10,000");
+      return;
+    }
+    if (amount > walletBalance) {
+      toast.error("Insufficient balance");
+      return;
+    }
+
+    setWithdrawing(true);
+    try {
+      const { error } = await supabase
+        .from("wallet_transactions")
+        .insert({
+          user_id: user?.id,
+          type: "withdrawal",
+          amount: amount,
+          description: "Withdrawal request",
+          status: "pending",
+        });
+
+      if (error) throw error;
+
+      toast.success("Withdrawal request submitted!");
+      setWithdrawAmount("");
+      fetchWalletData();
+    } catch (error) {
+      console.error("Error submitting withdrawal:", error);
+      toast.error("Failed to submit withdrawal request");
+    } finally {
+      setWithdrawing(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <UserLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </UserLayout>
+    );
+  }
 
   return (
     <UserLayout>
@@ -37,7 +129,7 @@ const Wallet = () => {
                 </div>
                 <div className="text-sm text-muted-foreground">Available Balance</div>
               </div>
-              <div className="text-4xl font-bold text-primary">₦85,500</div>
+              <div className="text-4xl font-bold text-primary">₦{walletBalance.toLocaleString()}</div>
             </CardContent>
           </Card>
 
@@ -49,7 +141,7 @@ const Wallet = () => {
                 </div>
                 <div className="text-sm text-muted-foreground">Pending Balance</div>
               </div>
-              <div className="text-4xl font-bold text-warning">₦32,000</div>
+              <div className="text-4xl font-bold text-warning">₦{pendingBalance.toLocaleString()}</div>
             </CardContent>
           </Card>
 
@@ -61,7 +153,7 @@ const Wallet = () => {
                 </div>
                 <div className="text-sm text-muted-foreground">Total Withdrawn</div>
               </div>
-              <div className="text-4xl font-bold text-success">₦250,000</div>
+              <div className="text-4xl font-bold text-success">₦{totalWithdrawn.toLocaleString()}</div>
             </CardContent>
           </Card>
         </div>
@@ -71,20 +163,22 @@ const Wallet = () => {
             <CardTitle>Request Withdrawal</CardTitle>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleWithdraw(); }}>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="amount">Amount (₦)</Label>
-                  <Input id="amount" type="number" placeholder="Enter amount" />
+                  <Input 
+                    id="amount" 
+                    type="number" 
+                    placeholder="Enter amount" 
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="method">Payment Method</Label>
                   <Input id="method" placeholder="Bank Transfer" readOnly />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bankAccount">Bank Account</Label>
-                <Input id="bankAccount" placeholder="Select bank account" />
               </div>
               <div className="bg-muted/50 p-4 rounded-lg">
                 <div className="text-sm space-y-1">
@@ -102,7 +196,8 @@ const Wallet = () => {
                   </div>
                 </div>
               </div>
-              <Button onClick={handleWithdraw} className="gradient-primary text-white">
+              <Button type="submit" disabled={withdrawing} className="gradient-primary text-white">
+                {withdrawing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 Request Withdrawal
               </Button>
             </form>
@@ -114,40 +209,55 @@ const Wallet = () => {
             <CardTitle>Transaction History</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {transactions.map((transaction) => (
-                  <TableRow key={transaction.id}>
-                    <TableCell>
-                      {transaction.type === 'credit' ? (
-                        <ArrowDownRight className="w-5 h-5 text-success" />
-                      ) : (
-                        <ArrowUpRight className="w-5 h-5 text-muted-foreground" />
-                      )}
-                    </TableCell>
-                    <TableCell>{transaction.description}</TableCell>
-                    <TableCell>{transaction.date}</TableCell>
-                    <TableCell className={`font-bold ${transaction.type === 'credit' ? 'text-success' : 'text-foreground'}`}>
-                      {transaction.type === 'credit' ? '+' : ''}₦{Math.abs(transaction.amount).toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <span className="px-2 py-1 bg-success/10 text-success rounded-full text-xs">
-                        {transaction.status}
-                      </span>
-                    </TableCell>
+            {transactions.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No transactions yet
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {transactions.map((transaction) => (
+                    <TableRow key={transaction.id}>
+                      <TableCell>
+                        {transaction.type === 'commission' || transaction.type === 'bonus' ? (
+                          <ArrowDownRight className="w-5 h-5 text-success" />
+                        ) : (
+                          <ArrowUpRight className="w-5 h-5 text-muted-foreground" />
+                        )}
+                      </TableCell>
+                      <TableCell>{transaction.description}</TableCell>
+                      <TableCell>{new Date(transaction.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell className={`font-bold ${
+                        transaction.type === 'commission' || transaction.type === 'bonus' 
+                          ? 'text-success' 
+                          : 'text-foreground'
+                      }`}>
+                        {transaction.type === 'commission' || transaction.type === 'bonus' ? '+' : '-'}
+                        ₦{Number(transaction.amount).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          transaction.status === 'completed' 
+                            ? 'bg-success/10 text-success' 
+                            : 'bg-warning/10 text-warning'
+                        }`}>
+                          {transaction.status}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>

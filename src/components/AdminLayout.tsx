@@ -26,6 +26,7 @@ import {
 import logo from "@/assets/logo.png";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const adminMenuItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
@@ -44,9 +45,11 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
 
-  const handleLogout = () => {
-    navigate("/login");
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/auth");
   };
 
   return (

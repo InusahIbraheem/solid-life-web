@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,136 +6,113 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit, Trash, Upload, Image } from "lucide-react";
-import { useState } from "react";
+import { Plus, Edit, Trash, Upload, Image, Loader2 } from "lucide-react";
+import { useState as useFormState } from "react";
 import { toast } from "sonner";
-import productCocoa from "@/assets/product-cocoa-1.jpg";
-import productPhyto from "@/assets/product-phyto.jpg";
-import productGreenTea from "@/assets/product-green-tea.jpg";
-import productLemonPlus from "@/assets/product-lemon-plus.jpg";
-import productDateSyrup from "@/assets/product-date-syrup.jpg";
-import productCocoaDate from "@/assets/product-cocoa-date.jpg";
-import productCoffeeMomentum from "@/assets/product-coffee-momentum.jpg";
-import productNaturesFiber from "@/assets/product-natures-fiber.jpg";
+import { supabase } from "@/integrations/supabase/client";
 
 const Products = () => {
+  const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [products, setProducts] = useState<any[]>([]);
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    price: "",
+    points: "",
+    stock: "",
+    image_url: "",
+  });
 
-  const products = [
-    { 
-      id: 1, 
-      name: "Phyto Power (42 Sachets)", 
-      price: 12500, 
-      points: 15, 
-      stock: 450,
-      sold: 2345,
-      status: "Active",
-      image: productPhyto
-    },
-    { 
-      id: 2, 
-      name: "Green Tea (42 Sachets)", 
-      price: 12500, 
-      points: 15, 
-      stock: 320,
-      sold: 1876,
-      status: "Active",
-      image: productGreenTea
-    },
-    { 
-      id: 3, 
-      name: "Lemon Plus (42 Sachets)", 
-      price: 12500, 
-      points: 15, 
-      stock: 280,
-      sold: 1543,
-      status: "Active",
-      image: productLemonPlus
-    },
-    { 
-      id: 4, 
-      name: "Date Syrup (500ml)", 
-      price: 8250, 
-      points: 10, 
-      stock: 200,
-      sold: 890,
-      status: "Active",
-      image: productDateSyrup
-    },
-    { 
-      id: 5, 
-      name: "Date Syrup (250ml)", 
-      price: 4125, 
-      points: 5, 
-      stock: 350,
-      sold: 1200,
-      status: "Active",
-      image: productDateSyrup
-    },
-    { 
-      id: 6, 
-      name: "Cocoa Date (10 Sachets)", 
-      price: 5500, 
-      points: 5, 
-      stock: 400,
-      sold: 980,
-      status: "Active",
-      image: productCocoaDate
-    },
-    { 
-      id: 7, 
-      name: "Cocoa Power Juggernaut (10 Sachets)", 
-      price: 5500, 
-      points: 5, 
-      stock: 380,
-      sold: 1100,
-      status: "Active",
-      image: productCocoa
-    },
-    { 
-      id: 8, 
-      name: "Coffee Momentum (10 Sachets)", 
-      price: 5500, 
-      points: 5, 
-      stock: 290,
-      sold: 750,
-      status: "Active",
-      image: productCoffeeMomentum
-    },
-    { 
-      id: 9, 
-      name: "Nature's Fiber (1kg)", 
-      price: 6000, 
-      points: 5, 
-      stock: 220,
-      sold: 650,
-      status: "Active",
-      image: productNaturesFiber
-    },
-  ];
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-      toast.success("Image uploaded successfully!");
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      toast.error("Failed to load products");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSave = () => {
-    toast.success("Product saved successfully!");
-    setShowAddForm(false);
+  const handleSave = async () => {
+    if (!formData.name || !formData.price) {
+      toast.error("Name and price are required");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("products")
+        .insert({
+          name: formData.name,
+          description: formData.description,
+          price: Number(formData.price),
+          points: Number(formData.points) || 0,
+          stock: Number(formData.stock) || 0,
+          image_url: formData.image_url,
+          status: "active",
+        });
+
+      if (error) throw error;
+
+      toast.success("Product added successfully!");
+      setShowAddForm(false);
+      setFormData({ name: "", description: "", price: "", points: "", stock: "", image_url: "" });
+      fetchProducts();
+    } catch (error) {
+      console.error("Error adding product:", error);
+      toast.error("Failed to add product");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (productId: string) => {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("products")
+        .delete()
+        .eq("id", productId);
+
+      if (error) throw error;
+
+      toast.success("Product deleted successfully!");
+      fetchProducts();
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      toast.error("Failed to delete product");
+    }
   };
 
   const totalProducts = products.length;
-  const totalStock = products.reduce((sum, p) => sum + p.stock, 0);
-  const totalSold = products.reduce((sum, p) => sum + p.sold, 0);
-  const totalRevenue = products.reduce((sum, p) => sum + (p.sold * p.price), 0);
+  const totalStock = products.reduce((sum, p) => sum + (p.stock || 0), 0);
+  const totalSold = products.reduce((sum, p) => sum + (p.sold || 0), 0);
+  const totalRevenue = products.reduce((sum, p) => sum + ((p.sold || 0) * Number(p.price)), 0);
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -156,64 +134,75 @@ const Products = () => {
               <CardTitle>Add New Product</CardTitle>
             </CardHeader>
             <CardContent>
-              <form className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Product Image</Label>
-                  <div className="flex items-start gap-4">
-                    <div className="w-32 h-32 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-muted/50 overflow-hidden">
-                      {selectedImage ? (
-                        <img src={selectedImage} alt="Preview" className="w-full h-full object-cover" />
-                      ) : (
-                        <Image className="w-8 h-8 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <Input 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handleImageUpload}
-                        className="hidden"
-                        id="product-image"
-                      />
-                      <Label htmlFor="product-image" className="cursor-pointer">
-                        <div className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-muted transition-colors w-fit">
-                          <Upload className="w-4 h-4" />
-                          Upload Image
-                        </div>
-                      </Label>
-                      <p className="text-xs text-muted-foreground mt-2">PNG, JPG up to 5MB</p>
-                    </div>
-                  </div>
-                </div>
+              <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="productName">Product Name</Label>
-                    <Input id="productName" placeholder="Enter product name" />
+                    <Label htmlFor="productName">Product Name *</Label>
+                    <Input 
+                      id="productName" 
+                      placeholder="Enter product name" 
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="price">Price (₦)</Label>
-                    <Input id="price" type="number" placeholder="12500" />
+                    <Label htmlFor="price">Price (₦) *</Label>
+                    <Input 
+                      id="price" 
+                      type="number" 
+                      placeholder="12500" 
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    />
                   </div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="points">PV (Point Value)</Label>
-                    <Input id="points" type="number" placeholder="15" />
+                    <Input 
+                      id="points" 
+                      type="number" 
+                      placeholder="15" 
+                      value={formData.points}
+                      onChange={(e) => setFormData({ ...formData, points: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="stock">Stock Quantity</Label>
-                    <Input id="stock" type="number" placeholder="500" />
+                    <Input 
+                      id="stock" 
+                      type="number" 
+                      placeholder="500" 
+                      value={formData.stock}
+                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="imageUrl">Image URL</Label>
+                  <Input 
+                    id="imageUrl" 
+                    placeholder="https://example.com/image.jpg" 
+                    value={formData.image_url}
+                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
-                  <Textarea id="description" placeholder="Product description..." rows={4} />
+                  <Textarea 
+                    id="description" 
+                    placeholder="Product description..." 
+                    rows={4} 
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  />
                 </div>
                 <div className="flex gap-2">
-                  <Button type="button" onClick={handleSave} className="gradient-primary text-white">
+                  <Button type="submit" disabled={saving} className="gradient-primary text-white">
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                     Save Product
                   </Button>
-                  <Button type="button" variant="outline" onClick={() => { setShowAddForm(false); setSelectedImage(null); }}>
+                  <Button type="button" variant="outline" onClick={() => setShowAddForm(false)}>
                     Cancel
                   </Button>
                 </div>
@@ -254,49 +243,69 @@ const Products = () => {
             <CardTitle>All Products</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Image</TableHead>
-                  <TableHead>Product Name</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>PV</TableHead>
-                  <TableHead>Stock</TableHead>
-                  <TableHead>Sold</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      <img src={product.image} alt={product.name} className="w-12 h-12 rounded-lg object-cover" />
-                    </TableCell>
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell className="font-bold text-primary">₦{product.price.toLocaleString()}</TableCell>
-                    <TableCell>{product.points} PV</TableCell>
-                    <TableCell>{product.stock}</TableCell>
-                    <TableCell>{product.sold}</TableCell>
-                    <TableCell>
-                      <span className="px-2 py-1 bg-success/10 text-success rounded-full text-xs">
-                        {product.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Trash className="w-4 h-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            {products.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No products yet. Add your first product above!
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Image</TableHead>
+                    <TableHead>Product Name</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>PV</TableHead>
+                    <TableHead>Stock</TableHead>
+                    <TableHead>Sold</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {products.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell>
+                        {product.image_url ? (
+                          <img src={product.image_url} alt={product.name} className="w-12 h-12 rounded-lg object-cover" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
+                            <Image className="w-6 h-6 text-muted-foreground" />
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-medium">{product.name}</TableCell>
+                      <TableCell className="font-bold text-primary">₦{Number(product.price).toLocaleString()}</TableCell>
+                      <TableCell>{product.points || 0} PV</TableCell>
+                      <TableCell>{product.stock || 0}</TableCell>
+                      <TableCell>{product.sold || 0}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          product.status === 'active' 
+                            ? 'bg-success/10 text-success' 
+                            : 'bg-warning/10 text-warning'
+                        }`}>
+                          {product.status}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleDelete(product.id)}
+                          >
+                            <Trash className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -1,13 +1,81 @@
+import { useState, useEffect } from "react";
 import { UserLayout } from "@/components/UserLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Copy, Share2 } from "lucide-react";
+import { Copy, Share2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Referrals = () => {
-  const referralLink = "https://solidlife.com/ref/JOHN123";
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [referrals, setReferrals] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    directReferrals: 0,
+    totalNetwork: 0,
+    totalEarnings: 0,
+  });
+
+  const referralLink = `${window.location.origin}/signup?ref=${user?.id?.slice(0, 8)}`;
+
+  useEffect(() => {
+    if (user) {
+      fetchReferrals();
+    }
+  }, [user]);
+
+  const fetchReferrals = async () => {
+    try {
+      // Fetch referrals where current user is the referrer
+      const { data, error } = await supabase
+        .from("referrals")
+        .select(`
+          *,
+          referred:profiles!referrals_referred_id_fkey (
+            first_name,
+            last_name,
+            email,
+            created_at
+          )
+        `)
+        .eq("referrer_id", user?.id);
+
+      if (error) throw error;
+
+      // Get profile info for each referred user
+      const referralsWithProfiles = await Promise.all(
+        (data || []).map(async (ref) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("first_name, last_name, email, created_at")
+            .eq("user_id", ref.referred_id)
+            .maybeSingle();
+          
+          return {
+            ...ref,
+            referredProfile: profile,
+          };
+        })
+      );
+
+      setReferrals(referralsWithProfiles);
+
+      // Calculate stats
+      const directReferrals = referralsWithProfiles.filter(r => r.level === 1).length;
+      const totalNetwork = referralsWithProfiles.length;
+      const totalEarnings = referralsWithProfiles.reduce((sum, r) => sum + Number(r.commission || 0), 0);
+
+      setStats({ directReferrals, totalNetwork, totalEarnings });
+    } catch (error) {
+      console.error("Error fetching referrals:", error);
+      toast.error("Failed to load referrals");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const copyLink = () => {
     navigator.clipboard.writeText(referralLink);
@@ -19,13 +87,15 @@ const Referrals = () => {
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
   };
 
-  const referrals = [
-    { id: 1, name: "Alice Johnson", email: "alice@example.com", date: "2024-01-15", level: 1, status: "Active", earned: "₦45,000" },
-    { id: 2, name: "Bob Smith", email: "bob@example.com", date: "2024-01-20", level: 1, status: "Active", earned: "₦32,500" },
-    { id: 3, name: "Carol White", email: "carol@example.com", date: "2024-02-05", level: 1, status: "Pending", earned: "₦0" },
-    { id: 4, name: "David Brown", email: "david@example.com", date: "2024-02-10", level: 2, status: "Active", earned: "₦18,000" },
-    { id: 5, name: "Eve Davis", email: "eve@example.com", date: "2024-02-15", level: 2, status: "Active", earned: "₦25,000" },
-  ];
+  if (loading) {
+    return (
+      <UserLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </UserLayout>
+    );
+  }
 
   return (
     <UserLayout>
@@ -41,7 +111,7 @@ const Referrals = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-2">
-              <Input value={referralLink} readOnly className="font-mono" />
+              <Input value={referralLink} readOnly className="font-mono text-sm" />
               <Button onClick={copyLink} variant="outline">
                 <Copy className="w-4 h-4 mr-2" />
                 Copy
@@ -63,19 +133,19 @@ const Referrals = () => {
         <div className="grid md:grid-cols-3 gap-6">
           <Card className="shadow-soft">
             <CardContent className="pt-6">
-              <div className="text-3xl font-bold text-primary mb-2">23</div>
+              <div className="text-3xl font-bold text-primary mb-2">{stats.directReferrals}</div>
               <div className="text-muted-foreground">Direct Referrals</div>
             </CardContent>
           </Card>
           <Card className="shadow-soft">
             <CardContent className="pt-6">
-              <div className="text-3xl font-bold text-secondary mb-2">156</div>
+              <div className="text-3xl font-bold text-secondary mb-2">{stats.totalNetwork}</div>
               <div className="text-muted-foreground">Total Network</div>
             </CardContent>
           </Card>
           <Card className="shadow-soft">
             <CardContent className="pt-6">
-              <div className="text-3xl font-bold text-success mb-2">₦120,500</div>
+              <div className="text-3xl font-bold text-success mb-2">₦{stats.totalEarnings.toLocaleString()}</div>
               <div className="text-muted-foreground">Referral Earnings</div>
             </CardContent>
           </Card>
@@ -86,38 +156,52 @@ const Referrals = () => {
             <CardTitle>Direct Referrals</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Joined Date</TableHead>
-                  <TableHead>Level</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Earned From</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {referrals.map((referral) => (
-                  <TableRow key={referral.id}>
-                    <TableCell className="font-medium">{referral.name}</TableCell>
-                    <TableCell>{referral.email}</TableCell>
-                    <TableCell>{referral.date}</TableCell>
-                    <TableCell>Level {referral.level}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        referral.status === 'Active' 
-                          ? 'bg-success/10 text-success' 
-                          : 'bg-warning/10 text-warning'
-                      }`}>
-                        {referral.status}
-                      </span>
-                    </TableCell>
-                    <TableCell className="font-bold text-primary">{referral.earned}</TableCell>
+            {referrals.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No referrals yet. Share your link to start earning!
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Joined Date</TableHead>
+                    <TableHead>Level</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Commission</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {referrals.map((referral) => (
+                    <TableRow key={referral.id}>
+                      <TableCell className="font-medium">
+                        {referral.referredProfile?.first_name || "N/A"} {referral.referredProfile?.last_name || ""}
+                      </TableCell>
+                      <TableCell>{referral.referredProfile?.email || "N/A"}</TableCell>
+                      <TableCell>
+                        {referral.referredProfile?.created_at 
+                          ? new Date(referral.referredProfile.created_at).toLocaleDateString() 
+                          : "N/A"}
+                      </TableCell>
+                      <TableCell>Level {referral.level || 1}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          referral.status === 'active' 
+                            ? 'bg-success/10 text-success' 
+                            : 'bg-warning/10 text-warning'
+                        }`}>
+                          {referral.status}
+                        </span>
+                      </TableCell>
+                      <TableCell className="font-bold text-primary">
+                        ₦{Number(referral.commission || 0).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>

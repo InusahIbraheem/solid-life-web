@@ -1,55 +1,98 @@
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Eye, Ban, CheckCircle } from "lucide-react";
+import { Search, Eye, Ban, CheckCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Users = () => {
-  const users = [
-    { 
-      id: 1, 
-      name: "John Doe", 
-      email: "john@example.com", 
-      phone: "+234 800 000 0001", 
-      joined: "2024-01-15", 
-      status: "Active",
-      kyc: "Approved",
-      referrals: 23,
-      earnings: "₦450,000"
-    },
-    { 
-      id: 2, 
-      name: "Jane Smith", 
-      email: "jane@example.com", 
-      phone: "+234 800 000 0002", 
-      joined: "2024-01-20", 
-      status: "Active",
-      kyc: "Pending",
-      referrals: 15,
-      earnings: "₦285,000"
-    },
-    { 
-      id: 3, 
-      name: "Bob Wilson", 
-      email: "bob@example.com", 
-      phone: "+234 800 000 0003", 
-      joined: "2024-02-05", 
-      status: "Suspended",
-      kyc: "Approved",
-      referrals: 8,
-      earnings: "₦120,000"
-    },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [users, setUsers] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    pendingKyc: 0,
+    suspended: 0,
+  });
 
-  const handleApprove = (name: string) => {
-    toast.success(`${name}'s KYC approved!`);
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      setUsers(data || []);
+
+      // Calculate stats
+      const total = data?.length || 0;
+      const pendingKyc = data?.filter(u => !u.kyc_verified).length || 0;
+
+      setStats({
+        totalUsers: total,
+        activeUsers: total - pendingKyc,
+        pendingKyc,
+        suspended: 0,
+      });
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast.error("Failed to load users");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSuspend = (name: string) => {
-    toast.error(`${name} suspended!`);
+  const handleApproveKyc = async (userId: string, userName: string) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ kyc_verified: true })
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      toast.success(`${userName}'s KYC approved!`);
+      fetchUsers();
+    } catch (error) {
+      console.error("Error approving KYC:", error);
+      toast.error("Failed to approve KYC");
+    }
   };
+
+  const filteredUsers = users.filter(user => {
+    const fullName = `${user.first_name || ""} ${user.last_name || ""}`.toLowerCase();
+    return fullName.includes(searchTerm.toLowerCase()) || 
+           (user.email || "").toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
+  // Count referrals for each user
+  const getUserReferralCount = async (userId: string) => {
+    const { count } = await supabase
+      .from("referrals")
+      .select("*", { count: "exact", head: true })
+      .eq("referrer_id", userId);
+    return count || 0;
+  };
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -62,25 +105,25 @@ const Users = () => {
         <div className="grid md:grid-cols-4 gap-6">
           <Card className="shadow-soft">
             <CardContent className="pt-6">
-              <div className="text-3xl font-bold text-primary mb-2">5,234</div>
+              <div className="text-3xl font-bold text-primary mb-2">{stats.totalUsers}</div>
               <div className="text-muted-foreground">Total Users</div>
             </CardContent>
           </Card>
           <Card className="shadow-soft">
             <CardContent className="pt-6">
-              <div className="text-3xl font-bold text-success mb-2">4,891</div>
-              <div className="text-muted-foreground">Active Users</div>
+              <div className="text-3xl font-bold text-success mb-2">{stats.activeUsers}</div>
+              <div className="text-muted-foreground">KYC Verified</div>
             </CardContent>
           </Card>
           <Card className="shadow-soft">
             <CardContent className="pt-6">
-              <div className="text-3xl font-bold text-warning mb-2">156</div>
+              <div className="text-3xl font-bold text-warning mb-2">{stats.pendingKyc}</div>
               <div className="text-muted-foreground">Pending KYC</div>
             </CardContent>
           </Card>
           <Card className="shadow-soft">
             <CardContent className="pt-6">
-              <div className="text-3xl font-bold text-destructive mb-2">187</div>
+              <div className="text-3xl font-bold text-destructive mb-2">{stats.suspended}</div>
               <div className="text-muted-foreground">Suspended</div>
             </CardContent>
           </Card>
@@ -91,7 +134,12 @@ const Users = () => {
             <div className="flex items-center justify-between">
               <CardTitle>All Users</CardTitle>
               <div className="flex gap-2">
-                <Input placeholder="Search users..." className="w-64" />
+                <Input 
+                  placeholder="Search users..." 
+                  className="w-64" 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
                 <Button variant="outline">
                   <Search className="w-4 h-4 mr-2" />
                   Search
@@ -100,76 +148,67 @@ const Users = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>KYC</TableHead>
-                  <TableHead>Referrals</TableHead>
-                  <TableHead>Earnings</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.phone}</TableCell>
-                    <TableCell>{user.joined}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        user.status === 'Active' 
-                          ? 'bg-success/10 text-success' 
-                          : 'bg-destructive/10 text-destructive'
-                      }`}>
-                        {user.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        user.kyc === 'Approved' 
-                          ? 'bg-success/10 text-success' 
-                          : 'bg-warning/10 text-warning'
-                      }`}>
-                        {user.kyc}
-                      </span>
-                    </TableCell>
-                    <TableCell>{user.referrals}</TableCell>
-                    <TableCell className="font-bold text-primary">{user.earnings}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        {user.kyc === 'Pending' && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleApprove(user.name)}
-                          >
-                            <CheckCircle className="w-4 h-4 text-success" />
-                          </Button>
-                        )}
-                        {user.status === 'Active' && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleSuspend(user.name)}
-                          >
-                            <Ban className="w-4 h-4 text-destructive" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
+            {filteredUsers.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No users found
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Joined</TableHead>
+                    <TableHead>KYC</TableHead>
+                    <TableHead>Level</TableHead>
+                    <TableHead>Earnings</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">
+                        {user.first_name || "N/A"} {user.last_name || ""}
+                      </TableCell>
+                      <TableCell>{user.email || "N/A"}</TableCell>
+                      <TableCell>{user.phone || "N/A"}</TableCell>
+                      <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          user.kyc_verified 
+                            ? 'bg-success/10 text-success' 
+                            : 'bg-warning/10 text-warning'
+                        }`}>
+                          {user.kyc_verified ? "Verified" : "Pending"}
+                        </span>
+                      </TableCell>
+                      <TableCell>{user.level || "Junior"}</TableCell>
+                      <TableCell className="font-bold text-primary">
+                        ₦{Number(user.total_earnings || 0).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          {!user.kyc_verified && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleApproveKyc(user.user_id, `${user.first_name} ${user.last_name}`)}
+                            >
+                              <CheckCircle className="w-4 h-4 text-success" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>

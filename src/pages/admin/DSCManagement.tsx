@@ -1,110 +1,102 @@
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Building2, Plus, Search, TrendingUp, Calendar, DollarSign, Users, FileDown, CheckCircle, AlertCircle } from "lucide-react";
-import { useState } from "react";
+import { Building2, Plus, Search, TrendingUp, Calendar, FileDown, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { supabase } from "@/integrations/supabase/client";
 
 const DSCManagement = () => {
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [dscCenters, setDscCenters] = useState<any[]>([]);
+  const [formData, setFormData] = useState({
+    center_number: "",
+    operator_name: "",
+    address: "",
+    city: "",
+    state: "",
+    phone: "",
+    email: "",
+  });
 
-  const monthlyPerformance = {
-    month: "December 2024",
-    totalPayout: "₦8,750,000",
-    vatDeductible: "₦656,250",
-    totalRegistrations: 135,
-    totalProductSales: "₦7,460,000",
-    totalCreditLine: "₦530,000",
-    status: "On Track",
+  useEffect(() => {
+    fetchDSCCenters();
+  }, []);
+
+  const fetchDSCCenters = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("dsc_centers")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setDscCenters(data || []);
+    } catch (error) {
+      console.error("Error fetching DSC centers:", error);
+      toast.error("Failed to load DSC centers");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const yearlyPerformance = {
-    year: "2024",
-    totalPayout: "₦98,500,000",
-    totalSales: "₦89,520,000",
-    totalVAT: "₦7,387,500",
-    totalRegistrations: 1620,
-    status: "Exceeding Target",
+  const handleAddDSC = async () => {
+    if (!formData.center_number || !formData.operator_name) {
+      toast.error("Center number and operator name are required");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("dsc_centers")
+        .insert({
+          center_number: formData.center_number,
+          operator_name: formData.operator_name,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          phone: formData.phone,
+          email: formData.email,
+          status: "active",
+        });
+
+      if (error) throw error;
+
+      toast.success("DSC Center added successfully!");
+      setShowAddForm(false);
+      setFormData({ center_number: "", operator_name: "", address: "", city: "", state: "", phone: "", email: "" });
+      fetchDSCCenters();
+    } catch (error) {
+      console.error("Error adding DSC:", error);
+      toast.error("Failed to add DSC center");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const distributorServiceCentres = [
-    {
-      id: "DSC-001",
-      name: "Lagos Central DSC",
-      operator: "Chief Emmanuel Okafor",
-      address: "15 Broad Street, Lagos Island, Lagos State",
-      phone: "+234 803 456 7890",
-      email: "lagos.central@solidlife.ng",
-      monthlyRegistrations: 45,
-      productSales: "₦2,450,000",
-      creditLine: "₦350,000",
-      status: "Active",
-    },
-    {
-      id: "DSC-002",
-      name: "Abuja Main DSC",
-      operator: "Mrs. Amina Bello",
-      address: "Plot 234 Wuse Zone 5, Abuja FCT",
-      phone: "+234 806 789 0123",
-      email: "abuja.main@solidlife.ng",
-      monthlyRegistrations: 38,
-      productSales: "₦1,890,000",
-      creditLine: "₦180,000",
-      status: "Active",
-    },
-    {
-      id: "DSC-003",
-      name: "Owerri Hub DSC",
-      operator: "Dr. Chukwu Eze",
-      address: "Umuozu Ezumoha, Isiala Mbano LGA, Imo State",
-      phone: "+234 809 012 3456",
-      email: "owerri.hub@solidlife.ng",
-      monthlyRegistrations: 52,
-      productSales: "₦3,120,000",
-      creditLine: "₦0",
-      status: "Active",
-    },
-    {
-      id: "DSC-004",
-      name: "Port Harcourt DSC",
-      operator: "Chief Ada Okwu",
-      address: "24 Aba Road, GRA Phase 2, Port Harcourt, Rivers State",
-      phone: "+234 805 123 4567",
-      email: "portharcourt@solidlife.ng",
-      monthlyRegistrations: 28,
-      productSales: "₦1,540,000",
-      creditLine: "₦0",
-      status: "Active",
-    },
-    {
-      id: "DSC-005",
-      name: "Kano North DSC",
-      operator: "Alhaji Musa Ibrahim",
-      address: "12 Zaria Road, Nassarawa GRA, Kano State",
-      phone: "+234 802 345 6789",
-      email: "kano.north@solidlife.ng",
-      monthlyRegistrations: 22,
-      productSales: "₦980,000",
-      creditLine: "₦120,000",
-      status: "Under Review",
-    },
-  ];
-
-  const filteredDSCs = distributorServiceCentres.filter(
+  const filteredDSCs = dscCenters.filter(
     (dsc) =>
-      dsc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      dsc.operator.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      dsc.id.toLowerCase().includes(searchQuery.toLowerCase())
+      dsc.operator_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      dsc.center_number?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Calculate stats
+  const totalRegistrations = dscCenters.reduce((sum, d) => sum + (d.registrations || 0), 0);
+  const totalSales = dscCenters.reduce((sum, d) => sum + Number(d.product_sales || 0), 0);
+  const totalCreditLine = dscCenters.reduce((sum, d) => sum + Number(d.credit_line || 0), 0);
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
     
-    // Header
     doc.setFontSize(20);
     doc.setTextColor(34, 139, 34);
     doc.text("SolidLife MLM Nigeria Ltd", 105, 20, { align: "center" });
@@ -114,42 +106,35 @@ const DSCManagement = () => {
     doc.text("Distributor Service Centres Report", 105, 30, { align: "center" });
     doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, 38, { align: "center" });
 
-    // Monthly Performance Summary
-    doc.setFontSize(12);
-    doc.setTextColor(34, 139, 34);
-    doc.text(`Monthly Performance - ${monthlyPerformance.month}`, 14, 50);
-    
-    doc.setFontSize(10);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Total Payout: ${monthlyPerformance.totalPayout}`, 14, 58);
-    doc.text(`VAT Deductible: ${monthlyPerformance.vatDeductible}`, 14, 64);
-    doc.text(`Total Registrations: ${monthlyPerformance.totalRegistrations}`, 100, 58);
-    doc.text(`Total Product Sales: ${monthlyPerformance.totalProductSales}`, 100, 64);
-
-    // DSC Table
     autoTable(doc, {
-      startY: 75,
-      head: [["Centre No.", "Name / Operator", "Location", "Phone", "Registrations", "Sales", "Credit Line"]],
-      body: distributorServiceCentres.map((dsc) => [
-        dsc.id,
-        `${dsc.name}\n${dsc.operator}`,
-        dsc.address,
-        dsc.phone,
-        dsc.monthlyRegistrations.toString(),
-        dsc.productSales,
-        dsc.creditLine,
+      startY: 50,
+      head: [["Centre No.", "Operator", "Location", "Phone", "Registrations", "Sales", "Credit Line"]],
+      body: dscCenters.map((dsc) => [
+        dsc.center_number,
+        dsc.operator_name,
+        `${dsc.address || ""}, ${dsc.city || ""}, ${dsc.state || ""}`,
+        dsc.phone || "",
+        (dsc.registrations || 0).toString(),
+        `₦${Number(dsc.product_sales || 0).toLocaleString()}`,
+        `₦${Number(dsc.credit_line || 0).toLocaleString()}`,
       ]),
       styles: { fontSize: 8 },
       headStyles: { fillColor: [34, 139, 34] },
-      columnStyles: {
-        1: { cellWidth: 35 },
-        2: { cellWidth: 40 },
-      },
     });
 
     doc.save(`DSC_Report_${new Date().toISOString().split("T")[0]}.pdf`);
     toast.success("DSC Report exported as PDF");
   };
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -164,89 +149,152 @@ const DSCManagement = () => {
               <FileDown className="h-4 w-4 mr-2" />
               Export PDF
             </Button>
-            <Button>
+            <Button onClick={() => setShowAddForm(!showAddForm)}>
               <Plus className="h-4 w-4 mr-2" />
               Add DSC
             </Button>
           </div>
         </div>
 
-        {/* Performance Status Cards */}
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Monthly Performance */}
-          <Card className="shadow-soft">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Calendar className="h-5 w-5 text-primary" />
-                Monthly Performance - {monthlyPerformance.month}
-              </CardTitle>
-              <span className="flex items-center gap-1 text-sm font-medium text-success">
-                <CheckCircle className="h-4 w-4" />
-                {monthlyPerformance.status}
-              </span>
+        {showAddForm && (
+          <Card className="shadow-soft border-2 border-primary/20">
+            <CardHeader>
+              <CardTitle>Add New DSC Center</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="p-3 bg-primary/10 rounded-lg text-center">
-                  <div className="text-lg font-bold text-primary">{monthlyPerformance.totalPayout}</div>
-                  <div className="text-xs text-muted-foreground">Total Payout</div>
+              <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleAddDSC(); }}>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Center Number *</Label>
+                    <Input 
+                      placeholder="DSC-001" 
+                      value={formData.center_number}
+                      onChange={(e) => setFormData({ ...formData, center_number: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Operator Name *</Label>
+                    <Input 
+                      placeholder="John Doe" 
+                      value={formData.operator_name}
+                      onChange={(e) => setFormData({ ...formData, operator_name: e.target.value })}
+                    />
+                  </div>
                 </div>
-                <div className="p-3 bg-destructive/10 rounded-lg text-center">
-                  <div className="text-lg font-bold text-destructive">{monthlyPerformance.vatDeductible}</div>
-                  <div className="text-xs text-muted-foreground">VAT Deductible</div>
+                <div className="space-y-2">
+                  <Label>Address</Label>
+                  <Input 
+                    placeholder="Full address" 
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  />
                 </div>
-                <div className="p-3 bg-success/10 rounded-lg text-center">
-                  <div className="text-lg font-bold text-success">{monthlyPerformance.totalRegistrations}</div>
-                  <div className="text-xs text-muted-foreground">Registrations</div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>City</Label>
+                    <Input 
+                      placeholder="City" 
+                      value={formData.city}
+                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>State</Label>
+                    <Input 
+                      placeholder="State" 
+                      value={formData.state}
+                      onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                    />
+                  </div>
                 </div>
-                <div className="p-3 bg-secondary/10 rounded-lg text-center col-span-2 md:col-span-2">
-                  <div className="text-lg font-bold text-secondary">{monthlyPerformance.totalProductSales}</div>
-                  <div className="text-xs text-muted-foreground">Product Sales</div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Phone</Label>
+                    <Input 
+                      placeholder="+234 xxx xxx xxxx" 
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Email</Label>
+                    <Input 
+                      type="email"
+                      placeholder="email@example.com" 
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    />
+                  </div>
                 </div>
-                <div className="p-3 bg-warning/10 rounded-lg text-center">
-                  <div className="text-lg font-bold text-warning">{monthlyPerformance.totalCreditLine}</div>
-                  <div className="text-xs text-muted-foreground">Credit Line</div>
+                <div className="flex gap-2">
+                  <Button type="submit" disabled={saving}>
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Add DSC Center
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setShowAddForm(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="grid md:grid-cols-4 gap-6">
+          <Card className="shadow-soft">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                  <Building2 className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <div className="text-3xl font-bold">{dscCenters.length}</div>
+                  <div className="text-muted-foreground text-sm">Total DSCs</div>
                 </div>
               </div>
             </CardContent>
           </Card>
-
-          {/* Yearly Performance */}
           <Card className="shadow-soft">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                Yearly Performance - {yearlyPerformance.year}
-              </CardTitle>
-              <span className="flex items-center gap-1 text-sm font-medium text-success">
-                <CheckCircle className="h-4 w-4" />
-                {yearlyPerformance.status}
-              </span>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="p-3 bg-primary/10 rounded-lg text-center">
-                  <div className="text-lg font-bold text-primary">{yearlyPerformance.totalPayout}</div>
-                  <div className="text-xs text-muted-foreground">Total Payout</div>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-success" />
                 </div>
-                <div className="p-3 bg-secondary/10 rounded-lg text-center">
-                  <div className="text-lg font-bold text-secondary">{yearlyPerformance.totalSales}</div>
-                  <div className="text-xs text-muted-foreground">Total Sales</div>
+                <div>
+                  <div className="text-3xl font-bold">{totalRegistrations}</div>
+                  <div className="text-muted-foreground text-sm">Registrations</div>
                 </div>
-                <div className="p-3 bg-destructive/10 rounded-lg text-center">
-                  <div className="text-lg font-bold text-destructive">{yearlyPerformance.totalVAT}</div>
-                  <div className="text-xs text-muted-foreground">Total VAT</div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="shadow-soft">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-secondary" />
                 </div>
-                <div className="p-3 bg-success/10 rounded-lg text-center col-span-2 md:col-span-3">
-                  <div className="text-lg font-bold text-success">{yearlyPerformance.totalRegistrations}</div>
-                  <div className="text-xs text-muted-foreground">Total Registrations</div>
+                <div>
+                  <div className="text-3xl font-bold">₦{(totalSales / 1000000).toFixed(1)}M</div>
+                  <div className="text-muted-foreground text-sm">Product Sales</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="shadow-soft">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-warning/10 rounded-full flex items-center justify-center">
+                  <AlertCircle className="w-6 h-6 text-warning" />
+                </div>
+                <div>
+                  <div className="text-3xl font-bold">₦{totalCreditLine.toLocaleString()}</div>
+                  <div className="text-muted-foreground text-sm">Credit Line</div>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Search */}
         <Card className="shadow-soft">
           <CardContent className="pt-6">
             <div className="flex gap-4">
@@ -263,73 +311,77 @@ const DSCManagement = () => {
           </CardContent>
         </Card>
 
-        {/* DSC Table */}
         <Card className="shadow-soft">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5 text-primary" />
-              Independent Distributor Service Centres ({filteredDSCs.length})
+              Distributor Service Centres ({filteredDSCs.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Centre No.</TableHead>
-                    <TableHead>Name / Operator</TableHead>
-                    <TableHead>Location & Contact</TableHead>
-                    <TableHead>Monthly Registrations</TableHead>
-                    <TableHead>Product Sales</TableHead>
-                    <TableHead>Credit Line</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredDSCs.map((dsc) => (
-                    <TableRow key={dsc.id}>
-                      <TableCell className="font-medium">{dsc.id}</TableCell>
-                      <TableCell>
-                        <div className="font-semibold">{dsc.name}</div>
-                        <div className="text-sm text-muted-foreground">{dsc.operator}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">{dsc.address}</div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          📞 {dsc.phone}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          ✉️ {dsc.email}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-semibold text-success">{dsc.monthlyRegistrations}</span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-semibold text-primary">{dsc.productSales}</span>
-                      </TableCell>
-                      <TableCell>
-                        <span className={dsc.creditLine === "₦0" ? "text-success" : "text-warning font-semibold"}>
-                          {dsc.creditLine}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className={`flex items-center gap-1 text-sm ${
-                          dsc.status === "Active" ? "text-success" : "text-warning"
-                        }`}>
-                          {dsc.status === "Active" ? (
-                            <CheckCircle className="h-4 w-4" />
-                          ) : (
-                            <AlertCircle className="h-4 w-4" />
-                          )}
-                          {dsc.status}
-                        </span>
-                      </TableCell>
+            {filteredDSCs.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No DSC centers found. Add your first center above!
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Centre No.</TableHead>
+                      <TableHead>Name / Operator</TableHead>
+                      <TableHead>Location & Contact</TableHead>
+                      <TableHead>Registrations</TableHead>
+                      <TableHead>Product Sales</TableHead>
+                      <TableHead>Credit Line</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredDSCs.map((dsc) => (
+                      <TableRow key={dsc.id}>
+                        <TableCell className="font-medium">{dsc.center_number}</TableCell>
+                        <TableCell>
+                          <div className="font-semibold">{dsc.operator_name}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">{dsc.address}, {dsc.city}, {dsc.state}</div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            📞 {dsc.phone || "N/A"}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            ✉️ {dsc.email || "N/A"}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-semibold text-success">{dsc.registrations || 0}</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-semibold text-primary">₦{Number(dsc.product_sales || 0).toLocaleString()}</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className={Number(dsc.credit_line || 0) === 0 ? "text-success" : "text-warning font-semibold"}>
+                            ₦{Number(dsc.credit_line || 0).toLocaleString()}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`flex items-center gap-1 text-sm ${
+                            dsc.status === "active" ? "text-success" : "text-warning"
+                          }`}>
+                            {dsc.status === "active" ? (
+                              <CheckCircle className="h-4 w-4" />
+                            ) : (
+                              <AlertCircle className="h-4 w-4" />
+                            )}
+                            {dsc.status}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
