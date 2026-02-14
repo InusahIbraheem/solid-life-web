@@ -32,7 +32,7 @@ const Login = () => {
       <Card className="w-full max-w-md shadow-elevated relative z-10">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <img src={logo} alt="Solid Life" className="h-20 w-20" />
+            <img src={logo} alt="Solid Life" className="h-20 w-20 rounded-full" />
           </div>
           <CardTitle className="text-3xl font-bold">Welcome Back</CardTitle>
           <CardDescription className="text-base">

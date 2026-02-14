@@ -96,7 +96,7 @@ const Auth = () => {
       <Card className="w-full max-w-md shadow-elevated relative z-10">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <img src={logo} alt="Solid Life" className="h-20 w-20" />
+            <img src={logo} alt="Solid Life" className="h-20 w-20 rounded-full" />
           </div>
           <CardTitle className="text-2xl font-bold">Welcome to Solid Life</CardTitle>
           <CardDescription>Sign in or create an account to continue</CardDescription>
