@@ -14,6 +14,82 @@ export type Database = {
   }
   public: {
     Tables: {
+      bonus_transactions: {
+        Row: {
+          amount: number
+          bonus_type: string
+          created_at: string | null
+          description: string | null
+          id: string
+          order_id: string | null
+          pv_value: number | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          bonus_type: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          pv_value?: number | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          bonus_type?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          pv_value?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bonus_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cart_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          product_id: string | null
+          quantity: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          product_id?: string | null
+          quantity?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          product_id?: string | null
+          quantity?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dsc_centers: {
         Row: {
           address: string | null
@@ -174,6 +250,7 @@ export type Database = {
           last_name: string | null
           level: string | null
           local_government: string | null
+          package: string | null
           phone: string | null
           points: number | null
           sponsor_id: string | null
@@ -204,6 +281,7 @@ export type Database = {
           last_name?: string | null
           level?: string | null
           local_government?: string | null
+          package?: string | null
           phone?: string | null
           points?: number | null
           sponsor_id?: string | null
@@ -234,6 +312,7 @@ export type Database = {
           last_name?: string | null
           level?: string | null
           local_government?: string | null
+          package?: string | null
           phone?: string | null
           points?: number | null
           sponsor_id?: string | null
@@ -366,6 +445,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_order_bonuses: {
+        Args: { p_order_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
