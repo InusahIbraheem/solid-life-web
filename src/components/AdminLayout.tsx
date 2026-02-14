@@ -58,7 +58,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <Sidebar className="border-r">
           <div className="p-4 border-b bg-primary/5">
             <div className="flex items-center gap-3">
-              <img src={logo} alt="Solid Life" className="h-10 w-10" />
+              <img src={logo} alt="Solid Life" className="h-10 w-10 rounded-full" />
               <div>
                 <div className="font-bold text-primary">Solid Life</div>
                 <div className="text-xs text-muted-foreground">Admin Panel</div>
