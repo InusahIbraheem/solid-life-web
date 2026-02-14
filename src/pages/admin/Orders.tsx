@@ -81,7 +81,18 @@ const Orders = () => {
 
       if (error) throw error;
 
-      toast.success("Payment verified!");
+      // Trigger automatic bonus calculation
+      const { error: bonusError } = await supabase.rpc("calculate_order_bonuses", {
+        p_order_id: orderId,
+      });
+
+      if (bonusError) {
+        console.error("Bonus calculation error:", bonusError);
+        toast.warning("Payment verified but bonus calculation had an issue");
+      } else {
+        toast.success("Payment verified & bonuses distributed!");
+      }
+      
       fetchOrders();
     } catch (error) {
       console.error("Error verifying payment:", error);

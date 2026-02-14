@@ -24,6 +24,7 @@ import {
   Bell,
   Award,
   LogOut,
+  Package,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { Button } from "./ui/button";
@@ -35,6 +36,8 @@ const userMenuItems = [
   { title: "Profile & KYC", url: "/profile", icon: User },
   { title: "My Referrals", url: "/referrals", icon: Users },
   { title: "Products", url: "/products", icon: ShoppingBag },
+  { title: "Cart", url: "/cart", icon: ShoppingCart },
+  { title: "Packages", url: "/packages", icon: Package },
   { title: "Wallet", url: "/wallet", icon: Wallet },
   { title: "My Orders", url: "/orders", icon: ShoppingCart },
   { title: "Earnings", url: "/earnings", icon: TrendingUp },
